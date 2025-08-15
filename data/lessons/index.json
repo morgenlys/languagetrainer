@@ -1,0 +1,6 @@
+[
+  {"slug":"beispiel","title":"Lektion 1","subtitle":"Beispiel","order":1},
+  {"slug":"floskeln","title":"Lektion 2","subtitle":"Alltägliche Floskeln","order":2},
+  {"slug":"essen","title":"Lektion 3","subtitle":"Essen & Trinken","order":3},
+  {"slug":"reisen","title":"Lektion 4","subtitle":"Auf Reisen","order":4}
+]

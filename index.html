@@ -19,19 +19,26 @@
   <!-- Header -->
   <header class="app-header">
     <div class="frame">
-      <div class="brand">
+      <button id="brand-area" class="brand-area" title="Lernpfad öffnen">
         <span class="logo">Französisch</span>
         <div class="status">
           <span><strong id="stat-total">0</strong> gesamt</span>
           <span><strong id="stat-new">0</strong> neu</span>
           <span><strong id="stat-due">0</strong> fällig</span>
-          <span><strong id="stat-streak">0</strong> Streak</span>
+          <span><span class="fire">🔥</span> <strong id="stat-streak">0</strong></span>
         </div>
-      </div>
+      </button>
       <div class="header-actions">
         <button id="btn-options" class="icon-btn" title="Optionen">
           <svg><use href="#icon-settings"/></svg>
         </button>
+      </div>
+    </div>
+
+    <!-- Downslide Lernpfad -->
+    <div id="path-panel" class="path-panel" aria-hidden="true">
+      <div class="frame">
+        <div id="lesson-strip" class="lesson-strip" role="list"></div>
       </div>
     </div>
   </header>
@@ -126,7 +133,7 @@
     </div>
   </div>
 
-  <!-- Voice-Hinweis Modal (vollständige Anleitung) -->
+  <!-- Voice-Hinweis Modal -->
   <div class="modal" id="modal-voice" aria-hidden="true">
     <div class="modal-backdrop" data-close></div>
     <div class="modal-card">

@@ -7,7 +7,9 @@
     "type": "word",
     "tags": ["greeting"],
     "notes": "",
-    "tokens_fr": []
+    "tokens_fr": [],
+	"emoji":"👋",
+	"lesson":"beispiel"
   },
   {
     "id": "merci",
@@ -17,7 +19,9 @@
     "type": "word",
     "tags": ["greeting"],
     "notes": "",
-    "tokens_fr": []
+    "tokens_fr": [],
+	"emoji":"🙏",
+	"lesson":"beispiel"
   },
   {
     "id": "maison",
@@ -28,6 +32,8 @@
     "tags": ["home"],
     "notes": "",
     "tokens_fr": []
+	"emoji":"🏠",
+	"lesson":"beispiel"
   },
   {
     "id": "je_suis_content",
@@ -37,7 +43,8 @@
     "type": "sentence",
     "tags": ["basic"],
     "notes": "",
-    "tokens_fr": ["Je","suis","content"]
+    "tokens_fr": ["Je","suis","content"],
+	"lesson":"beispiel"
   },
   {
     "id": "ou_est_la_gare",
@@ -48,5 +55,6 @@
     "tags": ["travel"],
     "notes": "",
     "tokens_fr": ["Où","est","la","gare","?"]
+	"lesson":"beispiel"
   }
 ]

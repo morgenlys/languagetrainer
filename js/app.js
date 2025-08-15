@@ -9,11 +9,13 @@ const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 const state = {
   items: [],
   progress: {},
-  session: { onlyDue:false, includeWords:true, includeSentences:true },
+  session: { onlyDue:false, includeWords:true, includeSentences:true, lesson:null },
   current: null,
   settings: { frVoice: null, rate:1, pitch:1, autoplay:true },
   totals: {total:0, new:0, due:0, streak:0},
-  answered: false
+  lessonPlan: [], // {slug,title,subtitle,order,locked}
+  answered: false,
+  volume: 0.5   // halbe Lautstärke
 };
 
 const el = {
@@ -26,7 +28,8 @@ const el = {
   btnImport: $('#btn-import'), fileInput: $('#file-input'),
   selVoice: $('#sel-voice'), inpRate: $('#inp-rate'), inpPitch: $('#inp-pitch'), btnTTSTest: $('#btn-tts-test'),
   btnSample: $('#btn-load-sample'),
-  themeToggle: $('#theme-toggle'), fxOk: $('#fx-ok'), fxBad: $('#fx-bad')
+  themeToggle: $('#theme-toggle'), fxOk: $('#fx-ok'), fxBad: $('#fx-bad'),
+  brandArea: $('#brand-area'), pathPanel: $('#path-panel'), lessonStrip: $('#lesson-strip')
 };
 
 /* ===== THEME ===== */
@@ -42,26 +45,126 @@ const el = {
 })();
 
 /* ===== DATA ===== */
+function ensureLesson(item){
+  return { ...item, lesson: item.lesson || 'beispiel' };
+}
 function tokenizeFr(s){ return (s||'').split(/[\s]+/).map(t=>t.replace(/[.,!?;:()«»"“”]/g,'')).filter(Boolean); }
 function hashItems(items){
-  const s = items.map(i => i.id + '|' + i.de + '|' + i.fr).join('¬');
+  const s = items.map(i => i.id + '|' + i.de + '|' + i.fr + '|' + (i.lesson||'')).
+                  join('¬');
   let h = 0; for (let i=0;i<s.length;i++){ h = ((h<<5)-h) + s.charCodeAt(i); h |= 0; }
   return String(h);
 }
 function setItems(items){
-  state.items = items.map(x => ({
-    ...x,
-    id: x.id || normalize(x.fr).replace(/\s+/g,'_'),
-    tokens_fr: x.tokens_fr && x.tokens_fr.length ? x.tokens_fr : tokenizeFr(x.fr)
-  }));
+  state.items = items.map(x => {
+    const y = ensureLesson(x);
+    return {
+      ...y,
+      id: y.id || normalize(y.fr).replace(/\s+/g,'_'),
+      tokens_fr: y.tokens_fr && y.tokens_fr.length ? y.tokens_fr : tokenizeFr(y.fr)
+    };
+  });
+
   const old = loadProgressCookie();
   state.progress = (old && old.progress && old.meta && old.meta.hash === hashItems(state.items))
     ? mergeProgress(state.items, old.progress)
     : newProgressFor(state.items);
 
-  saveAll(); refreshStats();
+  buildLessonPlan();
+  saveAll(); refreshStats(); renderLessonStrip();
   showMsg('Daten geladen.');
 }
+
+/* ===== LESSON PLAN ===== */
+async function buildLessonPlan(){
+  // versuchen, Plan zu laden
+  try{
+    const res = await fetch('./data/lessons/index.json', {cache:'no-store'});
+    if (res.ok){
+      const plan = await res.json();
+      state.lessonPlan = plan.map((p,i)=> ({...p, order: p.order ?? (i+1)}));
+    } else {
+      state.lessonPlan = [];
+    }
+  }catch(e){ state.lessonPlan = []; }
+
+  // falls kein Plan, automatisch aus Items bauen
+  if (!state.lessonPlan.length){
+    const set = new Map();
+    state.items.forEach(it=>{
+      const slug = it.lesson || 'beispiel';
+      if (!set.has(slug)) set.set(slug, {slug, title:`Lektion ${set.size+1}`, subtitle: slug[0].toUpperCase()+slug.slice(1), order:set.size+1});
+    });
+    state.lessonPlan = Array.from(set.values()).sort((a,b)=>a.order-b.order);
+  }
+
+  // locked-Status anhand Fortschritt der vorigen Lektion
+  applyLessonLocks();
+  // erste Lektion als Standard
+  if (!state.session.lesson) state.session.lesson = state.lessonPlan[0]?.slug || null;
+}
+
+function applyLessonLocks(){
+  const lessons = state.lessonPlan.sort((a,b)=> (a.order||999) - (b.order||999));
+  let prevComplete = true;
+  for (let i=0;i<lessons.length;i++){
+    const L = lessons[i];
+    const pct = lessonPercent(L.slug);
+    L.percent = pct;
+    L.locked = !prevComplete && i>0;
+    prevComplete = pct >= 100;
+  }
+}
+
+/* Fortschritt einer Lektion – über Streaks (bis 5) gemittelt */
+function lessonPercent(slug){
+  const ids = state.items.filter(it => (it.lesson||'beispiel') === slug).map(it=>it.id);
+  if (!ids.length) return 0;
+  let points = 0;
+  ids.forEach(id=>{
+    const p = state.progress[id] || {};
+    const s = Math.min(5, p.streak||0);
+    points += s;
+  });
+  return Math.round( (points / (5*ids.length)) * 100 );
+}
+
+function renderLessonStrip(){
+  const strip = el.lessonStrip; strip.innerHTML = '';
+  const activeSlug = state.session.lesson || (state.lessonPlan[0]?.slug);
+
+  state.lessonPlan.forEach((L, idx)=>{
+    const card = document.createElement('button');
+    card.className = 'lesson-card' + (L.slug===activeSlug ? ' active':'');
+    card.setAttribute('role','listitem');
+    if (L.locked) card.setAttribute('aria-disabled','true');
+    card.innerHTML = `
+      <div class="lesson-pct">${L.percent ?? 0} %</div>
+      <h4 class="lesson-title">${L.title || ('Lektion ' + (idx+1))}</h4>
+      <div class="lesson-sub">${L.subtitle || ''}</div>
+      <div class="progress"><span style="width:${L.percent ?? 0}%"></span></div>
+    `;
+    if (!L.locked){
+      card.addEventListener('click', ()=>{
+        state.session.lesson = L.slug;
+        renderLessonStrip();
+        closePathPanel();
+        nextCard();
+      });
+    }
+    strip.appendChild(card);
+  });
+}
+
+function openPathPanel(){ el.pathPanel.setAttribute('aria-hidden','false'); }
+function closePathPanel(){ el.pathPanel.setAttribute('aria-hidden','true'); }
+el.brandArea.addEventListener('click', ()=>{
+  const opened = el.pathPanel.getAttribute('aria-hidden') === 'false';
+  if (opened) closePathPanel(); else openPathPanel();
+});
+document.addEventListener('click', (e)=>{
+  if (!el.pathPanel.contains(e.target) && !el.brandArea.contains(e.target)) closePathPanel();
+});
 
 /* ===== MODALS ===== */
 function openModal(mod){ mod.setAttribute('aria-hidden','false'); }
@@ -81,7 +184,8 @@ function refreshStats(){
   el.statTotal.textContent = total;
   el.statNew.textContent = neu;
   el.statDue.textContent = due;
-  el.statStreak.textContent = streak;
+  el.statStreak.textContent = streak; // wird mit 🔥 davor im HTML gerendert
+  applyLessonLocks(); renderLessonStrip();
 }
 
 /* ===== TTS ===== */
@@ -95,7 +199,7 @@ function populateVoicesUI(){
   });
   const prefer = state.settings.frVoice || defaultFrenchVoiceURI();
   if (prefer) el.selVoice.value = prefer;
-  setSettings({voiceURI: el.selVoice.value, rate: state.settings.rate, pitch: state.settings.pitch});
+  setSettings({voiceURI: el.selVoice.value, rate: state.settings.rate, pitch: state.settings.pitch, volume: state.volume});
   if (!hasFrenchVoice()) openModal(el.modalVoice);
 }
 function initTTS(){
@@ -119,6 +223,7 @@ function initTTS(){
 async function playOgg(audioEl, fallbackType){
   if (!audioEl) return playFX(fallbackType);
   try{
+    audioEl.volume = state.volume;           // 0.5
     const p = audioEl.play();
     if (p && p.catch) await p.catch(()=> playFX(fallbackType));
   }catch(e){ playFX(fallbackType); }
@@ -128,19 +233,18 @@ function playFX(type='ok'){
   const o = ctx.createOscillator(); const g = ctx.createGain();
   o.connect(g); g.connect(ctx.destination);
   const t0 = ctx.currentTime;
+  const base = 0.09 * state.volume;          // halbe Lautstärke vs. vorher 0.18
   if (type==='ok'){
     o.type='sine'; o.frequency.setValueAtTime(660, t0);
     o.frequency.exponentialRampToValueAtTime(880, t0+0.12);
-    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.18, t0+0.02);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(base, t0+0.02);
     g.gain.exponentialRampToValueAtTime(0.0001, t0+0.20);
     o.start(t0); o.stop(t0+0.22);
   } else {
     o.type='square'; o.frequency.setValueAtTime(220, t0);
     g.gain.setValueAtTime(0.0001, t0);
     for(let i=0;i<3;i++){
-      const a = t0 + i*0.08;
-      g.gain.exponentialRampToValueAtTime(0.2, a+0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, a+0.06);
+      const a=t0+i*0.08; g.gain.exponentialRampToValueAtTime(base, a+0.01); g.gain.exponentialRampToValueAtTime(0.0001, a+0.06);
     }
     o.start(t0); o.stop(t0+0.26);
   }
@@ -152,10 +256,7 @@ function setActionLabel(text, cls=null){
   el.actionBar.classList.remove('ok','bad');
   el.primary.classList.remove('ok','bad');
   el.primary.textContent = text;
-  if (cls){
-    el.actionBar.classList.add(cls);
-    el.primary.classList.add(cls);
-  }
+  if (cls){ el.actionBar.classList.add(cls); el.primary.classList.add(cls); }
 }
 function setPrimaryEnabled(on){ el.primary.disabled = !on; }
 function clearForNext(){
@@ -165,14 +266,11 @@ function clearForNext(){
   setPrimaryEnabled(false);
 }
 
-/* Prompt-Größe 36/24/18 je Länge */
 function applyPromptSize(node, text){
   const len = (text||'').length;
   let px = 36; if (len > 60) px = 18; else if (len > 28) px = 24;
   node.style.fontSize = px + 'px';
 }
-
-/* Emoji: aus JSON (item.emoji) – Fallback auf interne Map */
 function emojiFor(item){
   if (item && item.emoji) return item.emoji;
   const fr = normalize(item.fr);
@@ -197,6 +295,13 @@ function render(item){
   else if (mode === 'speech_mc') renderSpeechMC(host, item);
   else if (mode === 'speech_input') renderSpeechInput(host, item);
   else if (mode === 'sentence_build') renderSentenceBuilder(host, item);
+}
+
+/* Filter nach aktiver Lektion */
+function itemsForActiveLesson(){
+  const slug = state.session.lesson;
+  if (!slug) return state.items;
+  return state.items.filter(it => (it.lesson||'beispiel') === slug);
 }
 
 /* MC */
@@ -270,13 +375,13 @@ function renderInputDF(host, item){
   };
 }
 
-/* Match 5 – beidseitig, mobil zwei Reihen à 5 nebeneinander */
+/* Match 5 – beidseitig */
 function renderMatch5(host, item){
   const emoji = emojiFor(item); if (emoji) host.append(div('emoji-hint', emoji));
   const title = div('prompt','Zuordnen: Deutsch ↔ Französisch'); applyPromptSize(title, title.textContent); host.append(title);
 
   const grid = div('kv'); const left = div('col'), right = div('col');
-  const pool = shuffle([item, ...shuffle(state.items.filter(i=>i.id!==item.id)).slice(0,4)]);
+  const pool = shuffle([item, ...shuffle(itemsForActiveLesson().filter(i=>i.id!==item.id)).slice(0,4)]);
   const leftItems = shuffle(pool.map(it => ({id: it.id, text: it.de, side:'de'})));
   const rightItems = shuffle(pool.map(it => ({id: it.id, text: it.fr, side:'fr'})));
 
@@ -358,7 +463,7 @@ function renderSpeechInput(host, item){
   };
 }
 
-/* Satzbau – Slots + Rückwärtsbewegung */
+/* Satzbau – Slots + Rücknahme + Audio beim Flug */
 function renderSentenceBuilder(host, item){
   const emoji = emojiFor(item); if (emoji) host.append(div('emoji-hint', emoji));
   const prompt = div('prompt', item.de); applyPromptSize(prompt, item.de); host.append(prompt);
@@ -391,6 +496,7 @@ function renderSentenceBuilder(host, item){
   };
 
   function move(tile){
+    const word = tile.textContent;
     // in Ziel -> zurück
     if (tile.parentElement === target){
       const slot = slotsById.get(tile.dataset.slotId);
@@ -398,6 +504,7 @@ function renderSentenceBuilder(host, item){
       const clone = tile.cloneNode(true); clone.classList.add('fly-clone');
       Object.assign(clone.style,{left:rectFrom.left+'px',top:rectFrom.top+'px',width:rectFrom.width+'px'}); document.body.appendChild(clone);
       const dx = rectTo.left-rectFrom.left; const dy = rectTo.top-rectFrom.top;
+      speakFR(word);
       clone.animate([{transform:'translate(0,0)'},{transform:`translate(${dx}px, ${dy}px)`}],{duration:260,easing:'cubic-bezier(.2,.8,.2,1)'}).onfinish=()=>{
         clone.remove(); slot.classList.remove('empty'); slot.appendChild(tile); placed=Math.max(0,placed-1); setPrimaryEnabled(placed>0);
       };
@@ -411,6 +518,7 @@ function renderSentenceBuilder(host, item){
     const clone = tile.cloneNode(true); clone.classList.add('fly-clone');
     Object.assign(clone.style,{left:rectFrom.left+'px',top:rectFrom.top+'px',width:rectFrom.width+'px'}); document.body.appendChild(clone);
     const dx = rectGhost.left-rectFrom.left; const dy = rectGhost.top-rectFrom.top;
+    speakFR(word);
     clone.animate([{transform:'translate(0,0)'},{transform:`translate(${dx}px, ${dy-6}px)`}],{duration:260,easing:'cubic-bezier(.2,.8,.2,1)'}).onfinish=()=>{
       ghost.replaceWith(tile); clone.remove(); placed++; setPrimaryEnabled(placed>0);
     };
@@ -432,7 +540,6 @@ function finish(ok, {modeId, correctAnswer}){
   updateAfterAnswer(p, ok, modeId);
   saveAll(); refreshStats();
 
-  // Sounds
   playOgg(ok ? el.fxOk : el.fxBad, ok ? 'ok' : 'bad');
 
   if (ok){ showMsg('✔ Richtig!'); setActionLabel('Weiter','ok'); }
@@ -444,8 +551,9 @@ function finish(ok, {modeId, correctAnswer}){
 /* Flow */
 function nextCard(){
   if (!state.items.length) return;
+  const pool = itemsForActiveLesson();
   const opts = { onlyDue: el.chkOnlyDue.checked, includeWords: el.chkWords.checked, includeSentences: el.chkSent.checked };
-  const item = selectNextItem(state.items, state.progress, opts);
+  const item = selectNextItem(pool, state.progress, opts);
   clearForNext(); render(item);
 }
 
@@ -481,6 +589,9 @@ function saveAll(){
 
 /* Boot */
 window.addEventListener('DOMContentLoaded', async ()=>{
+  // initial Audio-Lautstärke für OGG
+  el.fxOk.volume = state.volume; el.fxBad.volume = state.volume;
+
   initTTS();
   try{ const res = await fetch('./data/sample.json'); const json = await res.json(); setItems(json); }catch(e){}
   el.primary.onclick = ()=> {}; // wird im Renderer gesetzt

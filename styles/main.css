@@ -24,12 +24,12 @@
   --chip-outline: var(--darkdark); /* Auswahlrahmen hell */
 
   /* Feedback-Paletten (hell) */
-  --ok-bar: rgb(215,241,228);        /* Leiste hellgrün */
-  --ok-btn: rgb(46,125,87);          /* Button grün */
-  --ok-btn-hover: rgb(35,94,66);     /* Hover grün */
-  --bad-bar: rgb(248,221,221);       /* Leiste hellrot */
-  --bad-btn: rgb(185,58,58);         /* Button rot */
-  --bad-btn-hover: rgb(143,44,44);   /* Hover rot */
+  --ok-bar: rgb(215,241,228);
+  --ok-btn: rgb(46,125,87);
+  --ok-btn-hover: rgb(35,94,66);
+  --bad-bar: rgb(248,221,221);
+  --bad-btn: rgb(185,58,58);
+  --bad-btn-hover: rgb(143,44,44);
 
   --border: var(--lightgray);
   --shadow: 0 18px 42px rgba(0,0,0,.15);
@@ -61,7 +61,7 @@ html[data-theme="dark"]{
   --border: var(--darkgray);
   --shadow: 0 16px 38px rgba(0,0,0,.55);
 
-  /* Feedback-Paletten (dunkel) – kontrastreicher */
+  /* Feedback-Paletten (dunkel) */
   --ok-bar: rgb(42,80,62);
   --ok-btn: rgb(58,138,101);
   --ok-btn-hover: rgb(46,110,81);
@@ -81,23 +81,51 @@ body{
   font-size: var(--fs-base);
   overflow:hidden; /* Desktop: kein Scrollen */
 }
-
-/* Georgia überall */
 button, input, select, textarea { font-family: var(--font-family); font-size: var(--fs-base); }
 
-/* ===================== HEADER/FOOTER ===================== */
+/* ===================== HEADER + Lernpfad ===================== */
 .app-header{
   position:fixed; top:0; left:0; right:0; height:56px;
-  display:flex; align-items:center; justify-content:center; background:transparent; z-index:7;
-}
-.app-footer{
-  position:fixed; bottom:0; left:0; right:0; height:56px;
-  display:flex; align-items:center; justify-content:center; background:transparent; z-index:7;
+  display:flex; flex-direction:column; align-items:center; background:transparent; z-index:9;
 }
 .frame{ width:min(var(--center-max), 92vw); display:flex; align-items:center; justify-content:space-between; }
-.brand{display:flex; align-items:center; gap:18px}
-.logo{font-weight:700; color:var(--chrome)}
-.status{display:flex; gap:16px}
+
+/* Klickfläche für Brand & Stats */
+.brand-area{
+  display:flex; align-items:center; gap:18px; background:transparent; border:0; cursor:pointer; padding:8px 10px;
+  color:var(--chrome);
+}
+.brand-area .logo{font-weight:700}
+.brand-area .status{display:flex; gap:16px}
+.brand-area:hover .logo,
+.brand-area:hover .status span{ text-decoration: underline }
+
+/* Downslide Panel */
+.path-panel{
+  width:100%; overflow:hidden; max-height:0; transition:max-height .28s ease; background:transparent;
+}
+.path-panel[aria-hidden="false"]{ max-height: 240px; }
+.lesson-strip{
+  display:flex; gap:24px; padding:16px 0 14px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+}
+.lesson-card{
+  position:relative; min-width: 240px; height:140px;
+  border:1px solid var(--border); border-radius:16px; background: var(--white);
+  color: var(--black); padding:18px; box-shadow: none;
+}
+html[data-theme="dark"] .lesson-card{ background: var(--darkgray); color: var(--white) }
+.lesson-card.active{ background: rgb(245,245,245) } /* leichtes hellgrau */
+html[data-theme="dark"] .lesson-card.active{ background: rgb(48,48,48) }
+.lesson-title{ font-size:22px; font-weight:700; margin:0 0 6px 0 }
+.lesson-sub{ opacity:.85 }
+.lesson-pct{ position:absolute; top:10px; right:14px; font-weight:700 }
+.progress{ position:absolute; left:18px; right:18px; bottom:16px; height:8px; border-radius:999px; border:1px solid var(--darkgray); background: var(--white) }
+html[data-theme="dark"] .progress{ border-color: var(--white); background: transparent }
+.progress > span{ display:block; height:100%; background: var(--darkgray); border-radius:999px; width:0% }
+html[data-theme="dark"] .progress > span{ background: var(--white) }
+.lesson-card[aria-disabled="true"]{ opacity:.35; pointer-events:none }
+
+/* Header-Buttons */
 .header-actions{display:flex; gap:10px}
 .icon-btn{
   background: transparent; color:var(--chrome);
@@ -107,7 +135,11 @@ button, input, select, textarea { font-family: var(--font-family); font-size: va
 .icon-btn:hover{ background: rgba(0,0,0,.06) }
 html[data-theme="dark"] .icon-btn:hover{ background: rgba(255,255,255,.08) }
 
-/* Footer rechtsbündig, „Darkmode“ nicht fett */
+/* Footer */
+.app-footer{
+  position:fixed; bottom:0; left:0; right:0; height:56px;
+  display:flex; align-items:center; justify-content:center; background:transparent; z-index:7;
+}
 .footer-right{justify-content:flex-end; gap:24px}
 .theme-toggle{display:flex; align-items:center; gap:10px; color:var(--chrome)}
 .toggle-caption{font-weight:400}
@@ -148,16 +180,15 @@ html[data-theme="dark"] .icon-btn:hover{ background: rgba(255,255,255,.08) }
   background:var(--btn); color:var(--btn-text);
   border:none; border-radius:12px; padding:12px 18px;
   font-weight:700; font-family: var(--font-family);
-  cursor:pointer; box-shadow: var(--shadow);
-  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px;
   transition: background-color .15s ease;
 }
 .btn:hover{ background:var(--btn-hover) }
 .btn.stable{ width:190px }
-/* Primärbutton nie Schatten – unabhängig vom Zustand */
-#primary-action{ box-shadow:none !important; }
+#primary-action{ box-shadow:none !important; } /* niemals Schatten */
 .btn[disabled]{
-  background: var(--barbg); color: var(--darkgray); box-shadow:none; opacity:1; cursor:not-allowed;
+  background: var(--barbg); color: var(--darkgray);
+  opacity:1; cursor:not-allowed;
 }
 
 /* ===================== ACTION BAR ===================== */
@@ -281,11 +312,10 @@ html[data-theme="dark"] .audio-btn:hover{ background: rgba(255,255,255,.08) }
 .switch input:checked + .slider:before{ transform: translateX(20px); background: var(--lightgray) }
 
 /* ===================== RESPONSIVE ===================== */
-/* Handy: Bühne füllt Viewport, Footer erst beim Scroll sichtbar, Match-Reihen nebeneinander */
 @media (max-width: 640px){
   body{ overflow:auto; }                 /* erlaubt Scroll zum Footer */
   .app-header{ position:sticky; top:0; }
-  .app-footer{ position:static; }        /* Footer liegt unterhalb, sichtbar erst beim Scrollen */
+  .app-footer{ position:static; }        /* Footer erst beim Scroll sichtbar */
 
   .stage{
     position:relative; top:0; bottom:auto; left:0; right:0;
@@ -298,26 +328,26 @@ html[data-theme="dark"] .audio-btn:hover{ background: rgba(255,255,255,.08) }
     border-radius: 0;
     box-shadow: none;
     height: 100%;
-    background: var(--white);            /* reine weiße Fläche mobil */
+    background: var(--white);
   }
   html[data-theme="dark"] .card.big{ background: var(--darkgray); }
 
   .card-inner{
     flex: 1 1 auto;
-    display:flex; align-items:center; justify-content:center; /* vertikal mittig */
+    display:flex; align-items:center; justify-content:center;
     padding: 18px 14px;
   }
 
   .action-bar{
-    margin-top: auto;                    /* bleibt unten in der Karte */
+    margin-top: auto;
     border-radius: 0;
     position: sticky;
     bottom: 0;
   }
 
-  /* Matching: 5 nebeneinander pro Reihe (DE & FR) */
+  /* Matching: 5 nebeneinander je Reihe (DE oben, FR unten) */
   .kv{
-    display:flex; flex-direction:column; gap:12px; width:100%;
+    display:flex; flex-direction:column; gap:10px; width:100%;
     padding: 0 8px;
   }
   .kv .col{
@@ -328,6 +358,6 @@ html[data-theme="dark"] .audio-btn:hover{ background: rgba(255,255,255,.08) }
     margin:0; padding:10px 8px; font-size: 14px;
   }
 
-  /* MC-Gitter einspaltig, damit alles passt */
+  /* MC einspaltig, damit alles passt */
   .mc-grid{ grid-template-columns: 1fr; width:100%; gap:12px }
 }
