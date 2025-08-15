@@ -1,6 +1,6 @@
 // storage.js – Persistenz in Cookies (Chunking) + LocalStorage Fallback
-const COOKIE_MAX = 3800; // konservativ
-const COOKIE_PREFIX = "vtp_"; // vocab trainer progress
+const COOKIE_MAX = 3800;
+const COOKIE_PREFIX = "vtp_";
 const COOKIE_DAYS = 365;
 
 function setCookie(name, value, days=COOKIE_DAYS){
@@ -21,7 +21,6 @@ function chunkString(str, size){
 
 export function saveProgressCookie(obj){
   try{
-    // Clean previous chunks
     document.cookie.split('; ').forEach(c=>{
       const [k] = c.split('=');
       if(k.startsWith(COOKIE_PREFIX)) deleteCookie(k);
@@ -30,7 +29,10 @@ export function saveProgressCookie(obj){
     const chunks = chunkString(json, COOKIE_MAX);
     chunks.forEach((ch, idx) => setCookie(`${COOKIE_PREFIX}${idx}`, ch));
     setCookie(`${COOKIE_PREFIX}meta`, String(chunks.length));
-  }catch(e){ console.warn('Cookie save failed, falling back to localStorage', e); localStorage.setItem('vt_progress', JSON.stringify(obj)); }
+  }catch(e){
+    console.warn('Cookie save failed, falling back to localStorage', e);
+    localStorage.setItem('vt_progress', JSON.stringify(obj));
+  }
 }
 
 export function loadProgressCookie(){

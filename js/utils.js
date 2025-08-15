@@ -1,4 +1,4 @@
-// utils.js – Helfer: Normalisierung, Zufall, Levenshtein (Damerau), CSV-Parser
+// utils.js – Normalisierung, Zufall, Damerau-Levenshtein, CSV-Parser
 
 export const randInt = (n) => Math.floor(Math.random() * n);
 export const choice = (arr) => arr[randInt(arr.length)];
@@ -20,7 +20,7 @@ export const normalize = (s) => (s ?? "")
   .trim()
   .toLowerCase();
 
-// Damerau-Levenshtein (einfach, iterativ)
+// Damerau-Levenshtein
 export function damerauLevenshtein(a, b){
   a = normalize(a); b = normalize(b);
   const al = a.length, bl = b.length;
@@ -44,26 +44,23 @@ export function damerauLevenshtein(a, b){
   return dp[al][bl];
 }
 
-// Fehlertoleranter Vergleich
+// Fehlertolerant
 export function isAcceptable(user, expected, alts = []){
   const nUser = normalize(user);
   const candidates = [expected, ...alts].map(normalize);
   if (candidates.includes(nUser)) return {ok:true, distance:0, matched:nUser};
-
-  // Toleranz abhängig von Länge
   const distances = candidates.map(c => damerauLevenshtein(nUser, c));
   const best = Math.min(...distances);
   const len = Math.max(nUser.length, normalize(expected).length);
-  const threshold = Math.max(1, Math.floor(len/8)); // 1 Fehler pro ~8 Zeichen
+  const threshold = Math.max(1, Math.floor(len/8));
   return {ok: best <= threshold, distance: best, matched:null};
 }
 
-// CSV Parser (simple, robust für Standardfälle)
+// CSV simple
 export function parseCSV(text){
   const lines = text.replace(/\r/g,'').split('\n').filter(l => l.trim().length);
   const header = lines[0].split(',').map(h => h.trim());
   const rows = lines.slice(1).map(line => {
-    // primitive CSV: handle einfache Anführungszeichen-Blöcke
     const parts = [];
     let cur = '', inQ = false;
     for (let i=0;i<line.length;i++){
@@ -78,7 +75,6 @@ export function parseCSV(text){
     return obj;
   });
 
-  // Map auf unser Schema
   const data = rows.map(r => {
     const altsFr = (r.alts_fr || r.altsFR || '').split(/[\|;]+/).map(s=>s.trim()).filter(Boolean);
     const altsDe = (r.alts_de || r.altsDE || '').split(/[\|;]+/).map(s=>s.trim()).filter(Boolean);

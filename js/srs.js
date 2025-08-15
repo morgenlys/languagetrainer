@@ -1,6 +1,5 @@
 // srs.js – Spaced Repetition & Auswahl-Logik
-
-import {shuffle, choice, normalize} from './utils.js';
+import {shuffle, choice} from './utils.js';
 
 const now = () => Date.now();
 
@@ -45,7 +44,7 @@ function scheduleNext(p, grade){ // grade: 0..5
     p.due = dnow + p.interval*24*60*60*1000;
   } else {
     p.interval = 0;
-    p.due = dnow + 12*60*60*1000; // in 12h nochmal
+    p.due = dnow + 12*60*60*1000;
   }
 }
 
@@ -53,12 +52,10 @@ export function updateAfterAnswer(p, wasCorrect, modeId){
   p.seen++;
   p.modeHistory.push({t: now(), mode: modeId, ok: wasCorrect});
   if (wasCorrect){ p.correct++; p.streak++; } else { p.wrong++; p.streak = 0; }
-  // Stage-Logik: erst MC, dann freiere Modi
   if (wasCorrect){
     if (p.stage === 0) p.stage = 1;
     else if (p.stage === 1) { p.stage = 2; p.typingUnlocked = true; }
   } else {
-    // Fehler -> wieder früher/gesicherter Modus
     if (p.stage > 0) p.stage = Math.max(0, p.stage-1);
   }
   const grade = wasCorrect ? (p.streak >= 2 ? 5 : 4) : (p.streak === 0 ? 2 : 1);
@@ -71,8 +68,6 @@ export function selectNextItem(items, progress, {onlyDue, includeWords, includeS
     if (it.type === 'sentence' && !includeSentences) return false;
     return true;
   });
-
-  // Gewichtung: überfällige stark bevorzugen, zuletzt falsch bevorzugen
   const scored = pool.map(it=>{
     const p = progress[it.id];
     const overdue = now() - (p.due || 0);
@@ -80,12 +75,9 @@ export function selectNextItem(items, progress, {onlyDue, includeWords, includeS
     const freshPenalty = p.seen < 2 ? 1 : 0;
     const recentWrong = p.modeHistory.slice(-3).some(h=>!h.ok) ? 2 : 0;
     let base = (onlyDue ? (overdue>0? 10:0) : (5 + dueScore + recentWrong - freshPenalty));
-    if (p.seen === 0) base += 6; // neue bevorzugen
+    if (p.seen === 0) base += 6;
     return {it, score: base};
   });
-
-  const max = Math.max(...scored.map(s=>s.score), 1);
-  // Roulette Wheel
   let ticket = Math.random() * scored.reduce((acc,s)=>acc+s.score,0);
   for (const s of scored){
     ticket -= s.score;
@@ -94,25 +86,21 @@ export function selectNextItem(items, progress, {onlyDue, includeWords, includeS
   return choice(pool);
 }
 
-// Erlaubte Modi abhängig von Stage
 export function allowedModesFor(p){
-  // IDs:
-  // mc_df, mc_fd, input_df, match5, speech_mc, speech_input, sentence_build
   const modes = [];
   if (p.stage === 0){
-    modes.push('mc_df');         // DE -> FR multiple choice
+    modes.push('mc_df');
   } else if (p.stage === 1){
-    modes.push('mc_fd','mc_df'); // FR -> DE + DE -> FR
+    modes.push('mc_fd','mc_df');
   } else {
     modes.push('mc_df','mc_fd','input_df','match5','speech_mc','speech_input','sentence_build');
   }
   return modes;
 }
 
-export function distractorsFor(items, target, n=3, direction='df'){ // 'df' deutsch->franz
+export function distractorsFor(items, target, n=3, direction='df'){
   const key = direction === 'df' ? 'fr' : 'de';
   const pool = items.filter(x=>x.id !== target.id);
-  // bevorzugt aus gleichen Tags
   const tagged = pool.filter(x => x.tags?.some(t => target.tags?.includes(t)));
   shuffle(tagged); shuffle(pool);
   const chosen = (tagged.concat(pool)).slice(0, n);

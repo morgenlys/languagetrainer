@@ -1,0 +1,5 @@
+id,de,fr,alts_fr,alts_de,type,tags,notes,tokens_fr
+bonjour,Guten Tag,bonjour,salut,,word,greeting,"formell oder neutral",
+merci,Danke,merci,,"danke schön|vielen dank",word,greeting,,
+je_suis_content,Ich bin froh,Je suis content,"Je suis heureux","Ich freue mich",sentence,basic,,"Je|suis|content"
+ou_est_la_gare,Wo ist der Bahnhof?,Où est la gare ?,,,sentence,travel,"Fragezeichen optional akzeptiert","Où|est|la|gare|?"
