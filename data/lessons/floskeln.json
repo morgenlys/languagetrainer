@@ -1,0 +1,49 @@
+[
+  {
+    "id": "bienvenue",
+    "de": "Willkommen!",
+    "fr": "Bienvenue!",
+    "alts": { "fr": [], "de": [] },
+    "type": "word",
+    "tags": ["greeting"],
+    "notes": "",
+    "tokens_fr": [],
+	"emoji":"🤝",
+	"lesson":"floskeln"
+  },
+  {
+    "id": "bonnenuit",
+    "de": "Gute Nacht",
+    "fr": "bonne nuit",
+    "alts": { "fr": [], "de": [] },
+    "type": "word",
+    "tags": ["greeting"],
+    "notes": "",
+    "tokens_fr": [],
+	"emoji":"😴",
+	"lesson":"floskeln"
+  },
+  {
+    "id": "salut",
+    "de": "Hallo!",
+    "fr": "Salut!",
+    "alts": { "fr": ["bonjour"], "de": [] },
+    "type": "word",
+    "tags": ["greeting"],
+    "notes": "",
+    "tokens_fr": [],
+	"emoji":"🙋",
+	"lesson":"floskeln"
+  },
+  {
+    "id": "excusezmoi",
+    "de": "Entschuldigung",
+    "fr": "excusez-moi",
+    "alts": { "fr": ["pardon","désolé","mes excuses","pardonnez-moi"], "de": [] },
+    "type": "word",
+    "tags": ["sorry"],
+    "notes": "",
+    "tokens_fr": [],
+	"lesson":"floskeln"
+  }
+]
