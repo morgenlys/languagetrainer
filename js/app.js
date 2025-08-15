@@ -171,6 +171,9 @@ function refreshStats(){
 }
 
 /* ===== TTS ===== */
+/* Vermeidet falschen Hinweis auf Mobilgeräten: erst nach kurzer Verzögerung checken,
+   und zusätzlich auf voiceschanged reagieren. */
+let ttsCheckedOnce = false;
 function populateVoicesUI(){
   const voices = getVoices();
   el.selVoice.innerHTML = '';
@@ -182,10 +185,34 @@ function populateVoicesUI(){
   const prefer = state.settings.frVoice || defaultFrenchVoiceURI();
   if (prefer) el.selVoice.value = prefer;
   setSettings({voiceURI: el.selVoice.value, rate: state.settings.rate, pitch: state.settings.pitch, volume: state.volume});
-  if (!hasFrenchVoice()) openModal(el.modalVoice);
 }
+
+function checkFrenchVoiceWithDelay(){
+  if (ttsCheckedOnce) return;
+  ttsCheckedOnce = true;
+  // 800ms warten, dann prüfen – genug Zeit für Browser, Stimmen zu laden
+  setTimeout(()=>{
+    if (!hasFrenchVoice()){
+      openModal(el.modalVoice);
+    }
+  }, 800);
+}
+
 function initTTS(){
   populateVoicesUI();
+  // Reagieren, wenn Stimmen asynchron ankommen
+  if ('onvoiceschanged' in speechSynthesis){
+    speechSynthesis.onvoiceschanged = ()=>{
+      populateVoicesUI();
+      // Wenn jetzt FR verfügbar ist, Fenster nicht öffnen
+      if (hasFrenchVoice()){
+        // optional: schließen, falls offen
+        closeModal(el.modalVoice);
+      }
+    };
+  }
+  checkFrenchVoiceWithDelay();
+
   el.selVoice.addEventListener('change', ()=>{
     state.settings.frVoice = el.selVoice.value;
     setSettings({voiceURI: state.settings.frVoice});
@@ -205,7 +232,7 @@ function initTTS(){
 async function playOgg(audioEl, fallbackType){
   if (!audioEl) return playFX(fallbackType);
   try{
-    audioEl.volume = state.volume;
+    audioEl.volume = state.volume; // halb so laut
     const p = audioEl.play();
     if (p && p.catch) await p.catch(()=> playFX(fallbackType));
   }catch(e){ playFX(fallbackType); }
@@ -244,6 +271,7 @@ function setPrimaryEnabled(on){ el.primary.disabled = !on; }
 function clearForNext(){ el.actionBar.classList.remove('ok','bad'); el.actionMsg.textContent=''; setActionLabel('Überprüfen'); setPrimaryEnabled(false); }
 function applyPromptSize(node, text){ const len=(text||'').length; let px=36; if(len>60) px=18; else if(len>28) px=24; node.style.fontSize=px+'px'; }
 function emojiFor(item){
+  // Emoji aus Daten nutzen; sonst Fallback
   if (item && item.emoji) return item.emoji;
   const fr = normalize(item.fr);
   const map = { 'maison':'🏠','bonjour':'👋','merci':'🙏','fromage':'🧀','pain':'🥖','eau':'💧','chat':'🐱','chien':'🐶','voiture':'🚗','gare':'🚉','ecole':'🏫','école':'🏫','cafe':'☕','café':'☕','pomme':'🍎','banane':'🍌','soleil':'☀️','pluie':'🌧️' };
