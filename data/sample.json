@@ -31,7 +31,7 @@
     "type": "word",
     "tags": ["home"],
     "notes": "",
-    "tokens_fr": []
+    "tokens_fr": [],
 	"emoji":"🏠",
 	"lesson":"beispiel"
   },
@@ -54,7 +54,7 @@
     "type": "sentence",
     "tags": ["travel"],
     "notes": "",
-    "tokens_fr": ["Où","est","la","gare","?"]
+    "tokens_fr": ["Où","est","la","gare","?"],
 	"lesson":"beispiel"
   }
 ]
