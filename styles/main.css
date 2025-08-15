@@ -82,7 +82,7 @@ body{
   overflow:hidden; /* Desktop: kein Scrollen */
 }
 
-/* wirklich überall Georgia */
+/* Georgia überall */
 button, input, select, textarea { font-family: var(--font-family); font-size: var(--fs-base); }
 
 /* ===================== HEADER/FOOTER ===================== */
@@ -111,9 +111,7 @@ html[data-theme="dark"] .icon-btn:hover{ background: rgba(255,255,255,.08) }
 .footer-right{justify-content:flex-end; gap:24px}
 .theme-toggle{display:flex; align-items:center; gap:10px; color:var(--chrome)}
 .toggle-caption{font-weight:400}
-.report-link{
-  color:var(--chrome); text-decoration:none;
-}
+.report-link{ color:var(--chrome); text-decoration:none; }
 .report-link:hover{ text-decoration:underline }
 
 /* ===================== STAGE ===================== */
@@ -156,6 +154,8 @@ html[data-theme="dark"] .icon-btn:hover{ background: rgba(255,255,255,.08) }
 }
 .btn:hover{ background:var(--btn-hover) }
 .btn.stable{ width:190px }
+/* Primärbutton nie Schatten – unabhängig vom Zustand */
+#primary-action{ box-shadow:none !important; }
 .btn[disabled]{
   background: var(--barbg); color: var(--darkgray); box-shadow:none; opacity:1; cursor:not-allowed;
 }
@@ -182,7 +182,7 @@ html[data-theme="dark"] .icon-btn:hover{ background: rgba(255,255,255,.08) }
 .input-wrap input{
   width:min(520px, 100%);
   padding:12px 14px; border-radius:12px; border:1px solid var(--border);
-  background:var(--white); color:var(--black);
+  background:var(--white); color: var(--black);
 }
 html[data-theme="dark"] .input-wrap input{ background: var(--darkdark); color: var(--white); border-color: var(--darkgray) }
 
@@ -203,8 +203,7 @@ html[data-theme="dark"] .input-wrap input{ background: var(--darkdark); color: v
 
 /* ===================== MATCHING ===================== */
 .kv{
-  display:grid; grid-template-columns:1fr 1fr; gap:16px;
-  width:min(720px,100%); margin:0 auto; align-items:start;
+  width:min(720px,100%); margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start;
 }
 .kv .col{
   background: var(--card);
@@ -281,18 +280,54 @@ html[data-theme="dark"] .audio-btn:hover{ background: rgba(255,255,255,.08) }
 .switch input:checked + .slider{ background: var(--black); border-color: var(--black) }
 .switch input:checked + .slider:before{ transform: translateX(20px); background: var(--lightgray) }
 
-/* ===================== RESPONSIVE (Mobile-Modus) ===================== */
+/* ===================== RESPONSIVE ===================== */
+/* Handy: Bühne füllt Viewport, Footer erst beim Scroll sichtbar, Match-Reihen nebeneinander */
 @media (max-width: 640px){
-  body{ overflow:auto; }
+  body{ overflow:auto; }                 /* erlaubt Scroll zum Footer */
   .app-header{ position:sticky; top:0; }
-  .app-footer{ position:static; } /* Footer erscheint nur unten beim Scrollen */
+  .app-footer{ position:static; }        /* Footer liegt unterhalb, sichtbar erst beim Scrollen */
+
   .stage{
-    position:relative; top:0; bottom:auto;
+    position:relative; top:0; bottom:auto; left:0; right:0;
     grid-template-columns: 0 1fr 0;
     padding: 0;
+    min-height: calc(100dvh - 56px);     /* füllt Rest unterhalb Header */
   }
-  .card.big{ border-radius:0; box-shadow:none; }
-  .action-bar{ border-radius:0; }
-  .mc-grid{grid-template-columns:1fr}
-  .kv{grid-template-columns:1fr}
+
+  .card.big{
+    border-radius: 0;
+    box-shadow: none;
+    height: 100%;
+    background: var(--white);            /* reine weiße Fläche mobil */
+  }
+  html[data-theme="dark"] .card.big{ background: var(--darkgray); }
+
+  .card-inner{
+    flex: 1 1 auto;
+    display:flex; align-items:center; justify-content:center; /* vertikal mittig */
+    padding: 18px 14px;
+  }
+
+  .action-bar{
+    margin-top: auto;                    /* bleibt unten in der Karte */
+    border-radius: 0;
+    position: sticky;
+    bottom: 0;
+  }
+
+  /* Matching: 5 nebeneinander pro Reihe (DE & FR) */
+  .kv{
+    display:flex; flex-direction:column; gap:12px; width:100%;
+    padding: 0 8px;
+  }
+  .kv .col{
+    background: transparent; box-shadow:none; padding:0;
+    display:grid; grid-template-columns: repeat(5, 1fr); gap:8px;
+  }
+  .kv .item{
+    margin:0; padding:10px 8px; font-size: 14px;
+  }
+
+  /* MC-Gitter einspaltig, damit alles passt */
+  .mc-grid{ grid-template-columns: 1fr; width:100%; gap:12px }
 }

@@ -16,7 +16,6 @@ const state = {
   answered: false
 };
 
-
 const el = {
   statTotal: $('#stat-total'), statNew: $('#stat-new'), statDue: $('#stat-due'), statStreak: $('#stat-streak'),
   modeContainer: $('#mode-container'),
@@ -116,24 +115,33 @@ function initTTS(){
   el.btnTTSTest.addEventListener('click', ()=> speakFR('Bonjour, je suis votre voix française.'));
 }
 
-
 /* ===== SOUNDS ===== */
 async function playOgg(audioEl, fallbackType){
   if (!audioEl) return playFX(fallbackType);
-  try{ const p = audioEl.play(); if (p && p.catch) await p.catch(()=> playFX(fallbackType)); }catch(e){ playFX(fallbackType); }
+  try{
+    const p = audioEl.play();
+    if (p && p.catch) await p.catch(()=> playFX(fallbackType));
+  }catch(e){ playFX(fallbackType); }
 }
 function playFX(type='ok'){
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const o = ctx.createOscillator(); const g = ctx.createGain(); o.connect(g); g.connect(ctx.destination);
+  const o = ctx.createOscillator(); const g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
   const t0 = ctx.currentTime;
   if (type==='ok'){
-    o.type='sine'; o.frequency.setValueAtTime(660, t0); o.frequency.exponentialRampToValueAtTime(880, t0+0.12);
-    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.18, t0+0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0+0.20);
+    o.type='sine'; o.frequency.setValueAtTime(660, t0);
+    o.frequency.exponentialRampToValueAtTime(880, t0+0.12);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.18, t0+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+0.20);
     o.start(t0); o.stop(t0+0.22);
   } else {
     o.type='square'; o.frequency.setValueAtTime(220, t0);
     g.gain.setValueAtTime(0.0001, t0);
-    for(let i=0;i<3;i++){ const a=t0+i*0.08; g.gain.exponentialRampToValueAtTime(0.2, a+0.01); g.gain.exponentialRampToValueAtTime(0.0001, a+0.06); }
+    for(let i=0;i<3;i++){
+      const a = t0 + i*0.08;
+      g.gain.exponentialRampToValueAtTime(0.2, a+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, a+0.06);
+    }
     o.start(t0); o.stop(t0+0.26);
   }
 }
@@ -144,25 +152,29 @@ function setActionLabel(text, cls=null){
   el.actionBar.classList.remove('ok','bad');
   el.primary.classList.remove('ok','bad');
   el.primary.textContent = text;
-  if (cls){ el.actionBar.classList.add(cls); el.primary.classList.add(cls); }
+  if (cls){
+    el.actionBar.classList.add(cls);
+    el.primary.classList.add(cls);
+  }
 }
 function setPrimaryEnabled(on){ el.primary.disabled = !on; }
 function clearForNext(){
   el.actionBar.classList.remove('ok','bad');
-  el.actionMsg.textContent = '';     // << Rückmeldung sicher löschen
+  el.actionMsg.textContent = '';
   setActionLabel('Überprüfen');
   setPrimaryEnabled(false);
 }
 
-/* Prompt-Größe */
+/* Prompt-Größe 36/24/18 je Länge */
 function applyPromptSize(node, text){
   const len = (text||'').length;
   let px = 36; if (len > 60) px = 18; else if (len > 28) px = 24;
   node.style.fontSize = px + 'px';
 }
 
-/* Emoji Map */
+/* Emoji: aus JSON (item.emoji) – Fallback auf interne Map */
 function emojiFor(item){
+  if (item && item.emoji) return item.emoji;
   const fr = normalize(item.fr);
   const map = { 'maison':'🏠','bonjour':'👋','merci':'🙏','fromage':'🧀','pain':'🥖','eau':'💧','chat':'🐱','chien':'🐶','voiture':'🚗','gare':'🚉','ecole':'🏫','école':'🏫','cafe':'☕','café':'☕','pomme':'🍎','banane':'🍌','soleil':'☀️','pluie':'🌧️' };
   return map[fr] || '';
@@ -258,7 +270,7 @@ function renderInputDF(host, item){
   };
 }
 
-/* Match 5 */
+/* Match 5 – beidseitig, mobil zwei Reihen à 5 nebeneinander */
 function renderMatch5(host, item){
   const emoji = emojiFor(item); if (emoji) host.append(div('emoji-hint', emoji));
   const title = div('prompt','Zuordnen: Deutsch ↔ Französisch'); applyPromptSize(title, title.textContent); host.append(title);
@@ -410,7 +422,7 @@ function div(cls, html){ const d=document.createElement('div'); if(cls) d.classN
 function button(cls, html){ const b=document.createElement('button'); if(cls) b.className=cls; b.innerHTML=html; return b; }
 function audioBtn(onClick){ const b = button('audio-btn', `<svg><use href="#icon-sound"/></svg>`); b.addEventListener('click', onClick); return b; }
 
-/* Abschluss / Flow / Import / Boot bleiben identisch */
+/* Abschluss */
 function finish(ok, {modeId, correctAnswer}){
   if (state.answered) return;
   state.answered = true;
@@ -420,6 +432,7 @@ function finish(ok, {modeId, correctAnswer}){
   updateAfterAnswer(p, ok, modeId);
   saveAll(); refreshStats();
 
+  // Sounds
   playOgg(ok ? el.fxOk : el.fxBad, ok ? 'ok' : 'bad');
 
   if (ok){ showMsg('✔ Richtig!'); setActionLabel('Weiter','ok'); }
@@ -427,6 +440,8 @@ function finish(ok, {modeId, correctAnswer}){
 
   el.primary.onclick = ()=> nextCard();
 }
+
+/* Flow */
 function nextCard(){
   if (!state.items.length) return;
   const opts = { onlyDue: el.chkOnlyDue.checked, includeWords: el.chkWords.checked, includeSentences: el.chkSent.checked };
