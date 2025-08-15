@@ -23,13 +23,13 @@
   --chip-hover: rgb(232,232,232);
   --chip-outline: var(--darkdark); /* Auswahlrahmen hell */
 
-  /* Feedback nur hier farbig erlaubt */
-  --ok-bar: rgb(215,241,228);
-  --ok-btn: rgb(46,125,87);
-  --ok-btn-hover: rgb(35,94,66);
-  --bad-bar: rgb(248,221,221);
-  --bad-btn: rgb(185,58,58);
-  --bad-btn-hover: rgb(143,44,44);
+  /* Feedback-Paletten (hell) */
+  --ok-bar: rgb(215,241,228);        /* hellgrün Leiste */
+  --ok-btn: rgb(46,125,87);          /* Button grün */
+  --ok-btn-hover: rgb(35,94,66);     /* Hover grün */
+  --bad-bar: rgb(248,221,221);       /* hellrot Leiste */
+  --bad-btn: rgb(185,58,58);         /* Button rot */
+  --bad-btn-hover: rgb(143,44,44);   /* Hover rot */
 
   --border: var(--lightgray);
   --shadow: 0 18px 42px rgba(0,0,0,.15);
@@ -61,12 +61,13 @@ html[data-theme="dark"]{
   --border: var(--darkgray);
   --shadow: 0 16px 38px rgba(0,0,0,.55);
 
-  --ok-bar: rgb(42,80,62);  /* dunkler Streifen im Darkmode */
-  --ok-btn: rgb(215,241,228); /* heller Button */
-  --ok-btn-hover: var(--white);
-  --bad-bar: rgb(92,44,44);
-  --bad-btn: rgb(248,221,221);
-  --bad-btn-hover: var(--white);
+  /* Feedback-Paletten (dunkel) */
+  --ok-bar: rgb(42,80,62);          /* dunkler Leisten-Grün */
+  --ok-btn: rgb(58,138,101);        /* Button grün */
+  --ok-btn-hover: rgb(46,110,81);   /* Hover grün */
+  --bad-bar: rgb(92,44,44);         /* dunkler Leisten-Rot */
+  --bad-btn: rgb(204,93,93);        /* Button rot */
+  --bad-btn-hover: rgb(178,72,72);  /* Hover rot */
 }
 
 /* ===================== BASE ===================== */
@@ -81,10 +82,17 @@ body{
   overflow:hidden; /* kein Scrollen */
 }
 
-/* ===================== HEADER/FOOTER ===================== */
-.app-header,.app-footer{
-  height:56px; display:flex; align-items:center; justify-content:center;
-  background: transparent; border: none;
+/* überall Georgia, auch Buttons/Inputs */
+button, input, select, textarea { font-family: var(--font-family); font-size: var(--fs-base); }
+
+/* ===================== HEADER/FOOTER fixiert ===================== */
+.app-header{
+  position:fixed; top:0; left:0; right:0; height:56px;
+  display:flex; align-items:center; justify-content:center; background:transparent; z-index:7;
+}
+.app-footer{
+  position:fixed; bottom:0; left:0; right:0; height:56px;
+  display:flex; align-items:center; justify-content:center; background:transparent; z-index:7;
 }
 .frame{ width:min(var(--center-max), 92vw); display:flex; align-items:center; justify-content:space-between; }
 .brand{display:flex; align-items:center; gap:18px}
@@ -164,9 +172,9 @@ html[data-theme="dark"] .icon-btn:hover{ background: rgba(255,255,255,.08) }
 .action-bar.ok{ background: var(--ok-bar); }
 .action-bar.bad{ background: var(--bad-bar); }
 .message{font-size: var(--fs-base)}
-.actions .btn.ok{ background: var(--ok-btn); color: var(--black) }
+.actions .btn.ok{ background: var(--ok-btn); color: var(--white) }
 .actions .btn.ok:hover{ background: var(--ok-btn-hover) }
-.actions .btn.bad{ background: var(--bad-btn); color: var(--black) }
+.actions .btn.bad{ background: var(--bad-btn); color: var(--white) }
 .actions .btn.bad:hover{ background: var(--bad-btn-hover) }
 
 /* ===================== INPUT ===================== */
@@ -174,8 +182,7 @@ html[data-theme="dark"] .icon-btn:hover{ background: rgba(255,255,255,.08) }
 .input-wrap input{
   width:min(520px, 100%);
   padding:12px 14px; border-radius:12px; border:1px solid var(--border);
-  background:var(--white); color:var(--black); font-family: var(--font-family);
-  font-size: var(--fs-base);
+  background:var(--white); color:var(--black);
 }
 html[data-theme="dark"] .input-wrap input{ background: var(--darkdark); color: var(--white); border-color: var(--darkgray) }
 
@@ -194,6 +201,7 @@ html[data-theme="dark"] .input-wrap input{ background: var(--darkdark); color: v
   text-align:center;
   cursor:pointer;
   transition: background-color .15s ease;
+  font-family: var(--font-family);
 }
 .choice:hover{ background: var(--chip-hover) }
 .choice.selected{ outline:2px solid var(--chip-outline); }
@@ -212,6 +220,7 @@ html[data-theme="dark"] .input-wrap input{ background: var(--darkdark); color: v
   background: var(--chip-bg); color: var(--chip-text);
   border: 1px solid var(--chip-border);
   border-radius:10px; padding:12px 14px; margin:6px 0; cursor:pointer;
+  font-family: var(--font-family);
 }
 .kv .item:hover{ background: var(--chip-hover) }
 .kv .item.selected{ outline:2px solid var(--chip-outline) }
@@ -221,12 +230,13 @@ html[data-theme="dark"] .input-wrap input{ background: var(--darkdark); color: v
 .audio-btn{
   background: transparent; color: var(--chrome);
   border:1px solid var(--border); border-radius:10px; padding:8px; cursor:pointer;
+  font-family: var(--font-family);
 }
 .audio-btn:hover{ background: rgba(0,0,0,.06) }
 html[data-theme="dark"] .audio-btn:hover{ background: rgba(255,255,255,.08) }
 .audio-btn svg{width:18px;height:18px; fill:currentColor}
 
-/* ===================== SATZBAU (Duolingo-like) ===================== */
+/* ===================== SATZBAU (mit Slots) ===================== */
 .sentence-builder{display:flex; flex-direction:column; gap:14px; align-items:center}
 .sentence-target{
   min-height:64px; border:2px dashed var(--chip-border); border-radius:12px; padding:12px;
@@ -251,6 +261,7 @@ html[data-theme="dark"] .audio-btn:hover{ background: rgba(255,255,255,.08) }
   background: var(--chip-bg); color: var(--chip-text);
   border:1px solid var(--chip-border);
   border-radius:10px; padding:10px 12px; cursor:pointer; user-select:none;
+  font-family: var(--font-family);
 }
 
 /* Flugklon für Animation */
@@ -274,7 +285,7 @@ html[data-theme="dark"] .audio-btn:hover{ background: rgba(255,255,255,.08) }
 .opt-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
 .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
 
-/* ===================== THEME SWITCH exakt ===================== */
+/* ===================== THEME SWITCH ===================== */
 .switch{position:relative; display:inline-block; width:48px; height:28px}
 .switch input{opacity:0;width:0;height:0}
 .slider{

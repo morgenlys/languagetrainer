@@ -115,33 +115,23 @@ function initTTS(){
   el.btnTTSTest.addEventListener('click', ()=> speakFR('Bonjour, je suis votre voix française.'));
 }
 
-/* ===== SOUNDS (.ogg bevorzugt) ===== */
+/* ===== SOUNDS ===== */
 async function playOgg(audioEl, fallbackType){
   if (!audioEl) return playFX(fallbackType);
-  try{
-    const p = audioEl.play();
-    if (p && p.catch) await p.catch(()=> playFX(fallbackType));
-  }catch(e){ playFX(fallbackType); }
+  try{ const p = audioEl.play(); if (p && p.catch) await p.catch(()=> playFX(fallbackType)); }catch(e){ playFX(fallbackType); }
 }
 function playFX(type='ok'){
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const o = ctx.createOscillator(); const g = ctx.createGain();
-  o.connect(g); g.connect(ctx.destination);
+  const o = ctx.createOscillator(); const g = ctx.createGain(); o.connect(g); g.connect(ctx.destination);
   const t0 = ctx.currentTime;
   if (type==='ok'){
-    o.type='sine'; o.frequency.setValueAtTime(660, t0);
-    o.frequency.exponentialRampToValueAtTime(880, t0+0.12);
-    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.18, t0+0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0+0.20);
+    o.type='sine'; o.frequency.setValueAtTime(660, t0); o.frequency.exponentialRampToValueAtTime(880, t0+0.12);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.18, t0+0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0+0.20);
     o.start(t0); o.stop(t0+0.22);
   } else {
     o.type='square'; o.frequency.setValueAtTime(220, t0);
     g.gain.setValueAtTime(0.0001, t0);
-    for(let i=0;i<3;i++){
-      const a = t0 + i*0.08;
-      g.gain.exponentialRampToValueAtTime(0.2, a+0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, a+0.06);
-    }
+    for(let i=0;i<3;i++){ const a=t0+i*0.08; g.gain.exponentialRampToValueAtTime(0.2, a+0.01); g.gain.exponentialRampToValueAtTime(0.0001, a+0.06); }
     o.start(t0); o.stop(t0+0.26);
   }
 }
@@ -152,15 +142,12 @@ function setActionLabel(text, cls=null){
   el.actionBar.classList.remove('ok','bad');
   el.primary.classList.remove('ok','bad');
   el.primary.textContent = text;
-  if (cls){
-    el.actionBar.classList.add(cls);
-    el.primary.classList.add(cls);
-  }
+  if (cls){ el.actionBar.classList.add(cls); el.primary.classList.add(cls); }
 }
 function setPrimaryEnabled(on){ el.primary.disabled = !on; }
 function clearForNext(){ el.actionBar.classList.remove('ok','bad'); setActionLabel('Überprüfen'); setPrimaryEnabled(false); }
 
-/* Prompt-Größe 36/24/18 je Länge */
+/* Prompt-Größe */
 function applyPromptSize(node, text){
   const len = (text||'').length;
   let px = 36; if (len > 60) px = 18; else if (len > 28) px = 24;
@@ -264,7 +251,7 @@ function renderInputDF(host, item){
   };
 }
 
-/* Match 5 – beidseitig startbar */
+/* Match 5 */
 function renderMatch5(host, item){
   const emoji = emojiFor(item); if (emoji) host.append(div('emoji-hint', emoji));
   const title = div('prompt','Zuordnen: Deutsch ↔ Französisch'); applyPromptSize(title, title.textContent); host.append(title);
@@ -352,7 +339,7 @@ function renderSpeechInput(host, item){
   };
 }
 
-/* ===== Satzbau – Slots + Rückwärtsbewegung ===== */
+/* Satzbau – Slots + Rückwärtsbewegung */
 function renderSentenceBuilder(host, item){
   const emoji = emojiFor(item); if (emoji) host.append(div('emoji-hint', emoji));
   const prompt = div('prompt', item.de); applyPromptSize(prompt, item.de); host.append(prompt);
@@ -364,21 +351,12 @@ function renderSentenceBuilder(host, item){
 
   tiles.forEach((t, idx)=>{
     const tile = div('tile', t);
-    const slot = div('pool-slot');
-    slot.appendChild(tile);
-    pool.appendChild(slot);
+    const slot = div('pool-slot'); slot.appendChild(tile); pool.appendChild(slot);
 
-    // Nach Layout Messung Slot-Größe fixieren (damit Position stabil bleibt)
-    requestAnimationFrame(()=>{
-      const r = tile.getBoundingClientRect();
-      slot.style.width = r.width + 'px';
-      slot.style.height = r.height + 'px';
-    });
+    requestAnimationFrame(()=>{ const r = tile.getBoundingClientRect(); slot.style.width=r.width+'px'; slot.style.height=r.height+'px'; });
 
     const sid = 's'+idx+'_'+Math.random().toString(36).slice(2);
-    tile.dataset.slotId = sid;
-    slot.dataset.slotId = sid;
-    slotsById.set(sid, slot);
+    tile.dataset.slotId = sid; slot.dataset.slotId = sid; slotsById.set(sid, slot);
 
     tile.addEventListener('click', ()=> move(tile));
   });
@@ -394,48 +372,28 @@ function renderSentenceBuilder(host, item){
   };
 
   function move(tile){
-    // in Ziel -> zurück in Slot
+    // in Ziel -> zurück
     if (tile.parentElement === target){
       const slot = slotsById.get(tile.dataset.slotId);
-      const rectFrom = tile.getBoundingClientRect();
-      const rectTo = slot.getBoundingClientRect();
-
+      const rectFrom = tile.getBoundingClientRect(); const rectTo = slot.getBoundingClientRect();
       const clone = tile.cloneNode(true); clone.classList.add('fly-clone');
-      Object.assign(clone.style, { left: rectFrom.left+'px', top: rectFrom.top+'px', width: rectFrom.width+'px' });
-      document.body.appendChild(clone);
-
-      const dx = rectTo.left - rectFrom.left;
-      const dy = rectTo.top - rectFrom.top;
-
-      clone.animate([{transform:'translate(0,0)'},{transform:`translate(${dx}px, ${dy}px)`}], {duration:260, easing:'cubic-bezier(.2,.8,.2,1)'}).onfinish = ()=>{
-        clone.remove();
-        slot.classList.remove('empty');
-        slot.appendChild(tile);
-        placed = Math.max(0, placed-1);
-        setPrimaryEnabled(placed>0);
+      Object.assign(clone.style,{left:rectFrom.left+'px',top:rectFrom.top+'px',width:rectFrom.width+'px'}); document.body.appendChild(clone);
+      const dx = rectTo.left-rectFrom.left; const dy = rectTo.top-rectFrom.top;
+      clone.animate([{transform:'translate(0,0)'},{transform:`translate(${dx}px, ${dy}px)`}],{duration:260,easing:'cubic-bezier(.2,.8,.2,1)'}).onfinish=()=>{
+        clone.remove(); slot.classList.remove('empty'); slot.appendChild(tile); placed=Math.max(0,placed-1); setPrimaryEnabled(placed>0);
       };
       return;
     }
 
     // aus Pool -> ins Ziel
-    const slot = slotsById.get(tile.dataset.slotId);
-    slot.classList.add('empty');
-
+    const slot = slotsById.get(tile.dataset.slotId); slot.classList.add('empty');
     const ghost = document.createElement('span'); ghost.className='ghost-slot'; target.appendChild(ghost);
-
-    const rectFrom = tile.getBoundingClientRect();
-    const rectGhost = ghost.getBoundingClientRect();
-
+    const rectFrom = tile.getBoundingClientRect(); const rectGhost = ghost.getBoundingClientRect();
     const clone = tile.cloneNode(true); clone.classList.add('fly-clone');
-    Object.assign(clone.style, { left: rectFrom.left+'px', top: rectFrom.top+'px', width: rectFrom.width+'px' });
-    document.body.appendChild(clone);
-
-    const dx = rectGhost.left - rectFrom.left;
-    const dy = rectGhost.top - rectFrom.top;
-    clone.animate([{transform:'translate(0,0)'},{transform:`translate(${dx}px, ${dy-6}px)`}], {duration:260, easing:'cubic-bezier(.2,.8,.2,1)'}).onfinish = ()=>{
-      ghost.replaceWith(tile);
-      clone.remove();
-      placed++; setPrimaryEnabled(placed>0);
+    Object.assign(clone.style,{left:rectFrom.left+'px',top:rectFrom.top+'px',width:rectFrom.width+'px'}); document.body.appendChild(clone);
+    const dx = rectGhost.left-rectFrom.left; const dy = rectGhost.top-rectFrom.top;
+    clone.animate([{transform:'translate(0,0)'},{transform:`translate(${dx}px, ${dy-6}px)`}],{duration:260,easing:'cubic-bezier(.2,.8,.2,1)'}).onfinish=()=>{
+      ghost.replaceWith(tile); clone.remove(); placed++; setPrimaryEnabled(placed>0);
     };
   }
 }
@@ -455,16 +413,11 @@ function finish(ok, {modeId, correctAnswer}){
   updateAfterAnswer(p, ok, modeId);
   saveAll(); refreshStats();
 
-  // Sounds
   playOgg(ok ? el.fxOk : el.fxBad, ok ? 'ok' : 'bad');
 
-  if (ok){
-    showMsg('✔ Richtig!');
-    setActionLabel('Weiter','ok');
-  } else {
-    showMsg(`✖ Falsch. Richtig: <strong>${correctAnswer || item.fr}</strong>`);
-    setActionLabel('Weiter','bad');
-  }
+  if (ok){ showMsg('✔ Richtig!'); setActionLabel('Weiter','ok'); }
+  else   { showMsg(`✖ Falsch. Richtig: <strong>${correctAnswer || item.fr}</strong>`); setActionLabel('Weiter','bad'); }
+
   el.primary.onclick = ()=> nextCard();
 }
 
@@ -473,8 +426,7 @@ function nextCard(){
   if (!state.items.length) return;
   const opts = { onlyDue: el.chkOnlyDue.checked, includeWords: el.chkWords.checked, includeSentences: el.chkSent.checked };
   const item = selectNextItem(state.items, state.progress, opts);
-  clearForNext();
-  render(item);
+  clearForNext(); render(item);
 }
 
 /* Import / Sample / Reset */
