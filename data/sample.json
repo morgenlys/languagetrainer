@@ -6,7 +6,7 @@
     "alts": { "fr": ["salut"], "de": [] },
     "type": "word",
     "tags": ["greeting"],
-    "notes": "formell oder neutral",
+    "notes": "",
     "tokens_fr": []
   },
   {
@@ -46,7 +46,7 @@
     "alts": { "fr": [], "de": [] },
     "type": "sentence",
     "tags": ["travel"],
-    "notes": "Fragezeichen optional akzeptiert",
+    "notes": "",
     "tokens_fr": ["Où","est","la","gare","?"]
   }
 ]

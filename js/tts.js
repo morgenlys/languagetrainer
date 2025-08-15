@@ -35,11 +35,10 @@ export function speakFR(text){
   const u = new SpeechSynthesisUtterance(text);
   const chosen = (settings.voiceURI && voices.find(v=>v.voiceURI === settings.voiceURI)) || pickFrench();
   if (chosen) u.voice = chosen;
-  u.lang = (chosen?.lang) || 'fr-FR'; // erzwinge FR
+  u.lang = (chosen?.lang) || 'fr-FR';
   u.rate = settings.rate;
   u.pitch = settings.pitch;
   try { speechSynthesis.cancel(); } catch(e){}
-  // kleiner Delay für mobile, sonst droppt iOS manchmal
   setTimeout(()=> speechSynthesis.speak(u), 60);
 }
 

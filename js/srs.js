@@ -92,6 +92,5 @@ export function distractorsFor(items, target, n=3, direction='df'){
     seen.add(t);
     if (out.length >= n) break;
   }
-  // falls am Ende noch weniger vorhanden: backfill mit eindeutigen Varianten
   return out;
 }
