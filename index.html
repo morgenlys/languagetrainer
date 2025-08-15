@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Französisch Vokabeltrainer</title>
+  <meta name="description" content="Französisch-Vokabeltrainer mit Cookies, TTS, Fehlertoleranz & Spaced Repetition. Läuft komplett auf GitHub Pages.">
+  <link rel="stylesheet" href="styles/main.css"/>
+</head>
+<body>
+  <svg aria-hidden="true" style="display:none">
+    <symbol id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+    <symbol id="icon-sound" viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3zM16 7.82v8.36c1.79-.77 3-2.54 3-4.18s-1.21-3.41-3-4.18z"/></symbol>
+    <symbol id="icon-upload" viewBox="0 0 24 24"><path d="M5 20h14v-2H5m7-9l5 5h-3v4h-4v-4H7l5-5z"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="M9 16.2l-3.5-3.5L4 14.2l5 5 12-12-1.4-1.4z"/></symbol>
+    <symbol id="icon-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+    <symbol id="icon-refresh" viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0012 4V1L7 6l5 5V7a6 6 0 11-6 6H4a8 8 0 1013.65-6.65z"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM4 12a8 8 0 0116 0"/></symbol>
+    <symbol id="icon-info" viewBox="0 0 24 24"><path d="M11 7h2v2h-2zm0 4h2v6h-2z"/></symbol>
+  </svg>
+
+  <header class="app-header">
+    <div class="brand">
+      <span class="logo">fr·trainer</span>
+      <span class="muted">– GitHub Pages</span>
+    </div>
+    <div class="header-actions">
+      <button id="btn-import" class="btn ghost">
+        <svg><use href="#icon-upload"/></svg>
+        Datei laden
+      </button>
+      <input id="file-input" type="file" accept=".json,.csv" hidden>
+      <button id="btn-reset" class="btn ghost" title="Fortschritt zurücksetzen">Zurücksetzen</button>
+      <button id="btn-settings" class="btn ghost" title="Einstellungen">
+        <svg><use href="#icon-settings"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <aside class="panel">
+      <section class="card">
+        <h2>Status</h2>
+        <div class="stats">
+          <div><span id="stat-total">0</span><small>Gesamt</small></div>
+          <div><span id="stat-new">0</span><small>Neu</small></div>
+          <div><span id="stat-due">0</span><small>Fällig</small></div>
+          <div><span id="stat-streak">0</span><small>Streak</small></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress" id="progress"></div>
+        </div>
+        <div class="hint small">Daten werden in Cookies (mit Fallback auf LocalStorage) gespeichert.</div>
+      </section>
+
+      <section class="card">
+        <h2>Sessions</h2>
+        <div class="session-controls">
+          <label><input type="checkbox" id="chk-only-due"> nur fällige prüfen</label>
+          <label><input type="checkbox" id="chk-include-sentences" checked> Sätze einbeziehen</label>
+          <label><input type="checkbox" id="chk-include-words" checked> Wörter einbeziehen</label>
+        </div>
+        <button id="btn-new-session" class="btn primary">Starten</button>
+      </section>
+
+      <section class="card">
+        <h2>Stimme</h2>
+        <div class="tts-controls">
+          <label>FR-Stimme
+            <select id="sel-voice"></select>
+          </label>
+          <label>Rate <input id="inp-rate" type="range" min="0.7" max="1.4" step="0.05" value="1"></label>
+          <label>Pitch <input id="inp-pitch" type="range" min="0.8" max="1.2" step="0.05" value="1"></label>
+          <button id="btn-tts-test" class="btn">
+            <svg><use href="#icon-sound"/></svg> Test
+          </button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Daten</h2>
+        <div class="data-controls">
+          <button id="btn-load-sample" class="btn">Beispieldaten laden</button>
+          <a class="link" href="data/sample.csv" target="_blank">CSV Beispiel</a>
+          <a class="link" href="data/sample.json" target="_blank">JSON Beispiel</a>
+        </div>
+      </section>
+    </aside>
+
+    <section class="workspace">
+      <div id="mode-container" class="card big">
+        <div class="placeholder">
+          <svg class="big"><use href="#icon-info"/></svg>
+          <p>Importiere deine CSV/JSON oder nutze die Beispieldaten. Dann auf <strong>Starten</strong> klicken.</p>
+        </div>
+      </div>
+      <div id="feedback" class="toast"></div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <div class="muted">© 2025 – Läuft statisch (GitHub Pages). Keine Cookies von Dritten.</div>
+    <button id="btn-next" class="fab" title="Nächste Aufgabe">
+      <svg><use href="#icon-refresh"/></svg>
+    </button>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

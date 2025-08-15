@@ -1,0 +1,42 @@
+[
+  {
+    "id": "bonjour",
+    "de": "Guten Tag",
+    "fr": "bonjour",
+    "alts": { "fr": ["salut"], "de": [] },
+    "type": "word",
+    "tags": ["greeting"],
+    "notes": "formell oder neutral",
+    "tokens_fr": []
+  },
+  {
+    "id": "merci",
+    "de": "Danke",
+    "fr": "merci",
+    "alts": { "fr": [], "de": ["danke schön","vielen dank"] },
+    "type": "word",
+    "tags": ["greeting"],
+    "notes": "",
+    "tokens_fr": []
+  },
+  {
+    "id": "je_suis_content",
+    "de": "Ich bin froh",
+    "fr": "Je suis content",
+    "alts": { "fr": ["Je suis heureux"], "de": ["Ich freue mich"] },
+    "type": "sentence",
+    "tags": ["basic"],
+    "notes": "",
+    "tokens_fr": ["Je","suis","content"]
+  },
+  {
+    "id": "ou_est_la_gare",
+    "de": "Wo ist der Bahnhof?",
+    "fr": "Où est la gare ?",
+    "alts": { "fr": [], "de": [] },
+    "type": "sentence",
+    "tags": ["travel"],
+    "notes": "Fragezeichen optional akzeptiert",
+    "tokens_fr": ["Où","est","la","gare","?"]
+  }
+]
