@@ -45,6 +45,7 @@
           <p>Importiere deine CSV/JSON in <em>Optionen</em> oder nutze die Beispieldaten. Dann „Starten“.</p>
         </div>
       </div>
+
       <!-- unterer Streifen (gleich wie Seitenhintergrund) -->
       <div class="action-bar" id="action-bar">
         <div class="message" id="action-msg"></div>
@@ -58,14 +59,15 @@
 
   <!-- Footer (transparent, mit Frame) -->
   <footer class="app-footer">
-    <div class="frame">
+    <div class="frame footer-row">
       <div class="theme-toggle">
-        <span class="toggle-label">Darkmode</span>
         <label class="switch" title="Hell/Dunkel">
           <input id="theme-toggle" type="checkbox">
           <span class="slider"></span>
         </label>
+        <span class="toggle-caption">Darkmode</span>
       </div>
+      <a class="report-link" href="#" onclick="alert('Danke! Beschreibe das Problem kurz in einem Issue im Repo.');return false;">Problem melden</a>
     </div>
   </footer>
 
@@ -132,14 +134,7 @@
         <button class="icon-btn" data-close><svg><use href="#icon-close"/></svg></button>
       </div>
       <div class="modal-body">
-        <p>Dein Browser meldet keine französische Stimme. Bitte füge eine FR-Stimme hinzu:</p>
-        <ul>
-          <li><strong>iOS/iPadOS:</strong> Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen → Französisch laden.</li>
-          <li><strong>Android:</strong> Einstellungen → System → Sprachen & Eingabe → Text-in-Sprache → Stimme → Französisch herunterladen.</li>
-          <li><strong>Windows:</strong> Einstellungen → Zeit & Sprache → Sprache → Sprachpakete → Französisch (Stimme).</li>
-          <li><strong>macOS:</strong> Systemeinstellungen → Bedienungshilfen → Gesprochene Inhalte → Systemstimme → Anpassen… → Französisch.</li>
-        </ul>
-        <p>Danach Seite neu laden.</p>
+        <p>Dein Browser meldet keine französische Stimme. Bitte füge eine FR-Stimme hinzu (iOS/Android/Windows/macOS). Danach Seite neu laden.</p>
       </div>
     </div>
   </div>
