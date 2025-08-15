@@ -56,5 +56,16 @@
     "notes": "",
     "tokens_fr": ["Où","est","la","gare","?"],
 	"lesson":"beispiel"
+  },
+  {
+    "id": "biere",
+    "de": "Bier",
+    "fr": "bière",
+    "alts": { "fr": ["la bière"], "de": [] },
+    "type": "word",
+    "tags": ["beer"],
+    "notes": "",
+    "tokens_fr": [],
+	"emoji":"🍺",
   }
 ]
