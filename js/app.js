@@ -26,25 +26,22 @@ const el = {
   btnImport: $('#btn-import'), fileInput: $('#file-input'),
   selVoice: $('#sel-voice'), inpRate: $('#inp-rate'), inpPitch: $('#inp-pitch'), btnTTSTest: $('#btn-tts-test'),
   btnSample: $('#btn-load-sample'),
-  themeToggle: $('#theme-toggle'), themeLabel: $('#theme-label'),
-  fxOk: $('#fx-ok'), fxBad: $('#fx-bad')
+  themeToggle: $('#theme-toggle'), fxOk: $('#fx-ok'), fxBad: $('#fx-bad')
 };
 
-/* ======= Theme ======= */
+/* ========== Theme ========== */
 (function initTheme(){
   const persisted = localStorage.getItem('vt_theme') || 'light';
   document.documentElement.setAttribute('data-theme', persisted);
   el.themeToggle.checked = (persisted === 'dark');
-  el.themeLabel.textContent = el.themeToggle.checked ? 'Dunkel' : 'Hell';
   el.themeToggle.addEventListener('change', ()=>{
     const mode = el.themeToggle.checked ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', mode);
     localStorage.setItem('vt_theme', mode);
-    el.themeLabel.textContent = el.themeToggle.checked ? 'Dunkel' : 'Hell';
   });
 })();
 
-/* ======= Data ======= */
+/* ========== Data ========== */
 function tokenizeFr(s){ return (s||'').split(/[\s]+/).map(t=>t.replace(/[.,!?;:()«»"“”]/g,'')).filter(Boolean); }
 function hashItems(items){
   const s = items.map(i => i.id + '|' + i.de + '|' + i.fr).join('¬');
@@ -67,7 +64,7 @@ function setItems(items){
   showMsg('Daten geladen.');
 }
 
-/* ======= Modals ======= */
+/* ========== Modals ========== */
 function openModal(mod){ mod.setAttribute('aria-hidden','false'); }
 function closeModal(mod){ mod.setAttribute('aria-hidden','true'); }
 el.btnOptions.addEventListener('click', ()=> openModal(el.modalOptions));
@@ -75,22 +72,20 @@ $$('[data-close]').forEach(btn=> btn.addEventListener('click', e=> closeModal(e.
 el.modalOptions.querySelector('.modal-backdrop').addEventListener('click', ()=> closeModal(el.modalOptions));
 el.modalVoice.querySelector('.modal-backdrop').addEventListener('click', ()=> closeModal(el.modalVoice));
 
-/* ======= Stats ======= */
+/* ========== Stats ========== */
 function refreshStats(){
-  const p = state.progress;
-  const arr = Object.values(p);
+  const arr = Object.values(state.progress);
   const total = arr.length, now = Date.now();
   const due = arr.filter(x => (x.due||0) <= now).length;
   const neu = arr.filter(x => x.seen === 0).length;
   const streak = arr.reduce((a,b)=>a + (b.streak||0), 0);
-  state.totals = {total, new:neu, due, streak};
   el.statTotal.textContent = total;
   el.statNew.textContent = neu;
   el.statDue.textContent = due;
   el.statStreak.textContent = streak;
 }
 
-/* ======= TTS ======= */
+/* ========== TTS ========== */
 function populateVoicesUI(){
   const voices = getVoices();
   el.selVoice.innerHTML = '';
@@ -121,7 +116,7 @@ function initTTS(){
   el.btnTTSTest.addEventListener('click', ()=> speakFR('Bonjour, je suis votre voix française.'));
 }
 
-/* ======= Sounds: .ogg bevorzugt, Fallback WebAudio ======= */
+/* ========== Sounds: .ogg bevorzugt ========== */
 async function playOgg(audioEl, fallbackType){
   if (!audioEl) return playFX(fallbackType);
   try{
@@ -152,7 +147,7 @@ function playFX(type='ok'){
   }
 }
 
-/* ======= UI helpers ======= */
+/* ========== UI helpers ========== */
 function showMsg(text){ el.actionMsg.innerHTML = text; }
 function clearFeedback(){ el.actionBar.classList.remove('ok','bad'); el.actionMsg.textContent=''; }
 function setActionLabel(text, cls=null){
@@ -161,42 +156,47 @@ function setActionLabel(text, cls=null){
   if (cls) el.primary.classList.add(cls);
 }
 function setPrimaryEnabled(on){ el.primary.disabled = !on; }
-function stableCheckMode(){ setActionLabel('Überprüfen'); setPrimaryEnabled(false); }
 
-/* ======= Emoji ======= */
+/* Prompt-Größe 36 / 24 / 18 abhängig von Länge */
+function applyPromptSize(node, text){
+  const len = (text||'').length;
+  let px = 36; if (len > 60) px = 18; else if (len > 28) px = 24;
+  node.style.fontSize = px + 'px';
+}
+
+/* Emoji Map */
 function emojiFor(item){
   const fr = normalize(item.fr);
-  const map = {
-    'maison':'🏠','bonjour':'👋','merci':'🙏','fromage':'🧀','pain':'🥖','eau':'💧',
-    'chat':'🐱','chien':'🐶','voiture':'🚗','gare':'🚉','ecole':'🏫','école':'🏫',
-    'cafe':'☕','café':'☕','pomme':'🍎','banane':'🍌','soleil':'☀️','pluie':'🌧️'
-  };
+  const map = { 'maison':'🏠','bonjour':'👋','merci':'🙏','fromage':'🧀','pain':'🥖','eau':'💧','chat':'🐱','chien':'🐶','voiture':'🚗','gare':'🚉','ecole':'🏫','école':'🏫','cafe':'☕','café':'☕','pomme':'🍎','banane':'🍌','soleil':'☀️','pluie':'🌧️' };
   return map[fr] || '';
 }
 
-/* ======= Render dispatcher ======= */
+/* ========== Render Dispatcher ========== */
 function render(item){
-  state.current = item; state.answered = false; clearFeedback(); stableCheckMode();
+  state.current = item; state.answered = false; clearFeedback();
+  setActionLabel('Überprüfen'); setPrimaryEnabled(false);
+
   const host = el.modeContainer; host.innerHTML = '';
   const p = state.progress[item.id];
   const allowed = allowedModesFor(p);
   let mode = choice(allowed);
   if (item.type !== 'sentence' && mode==='sentence_build'){ mode = 'mc_df'; }
 
-  if (mode === 'mc_df') renderMC(host, item, p, 'df');
-  else if (mode === 'mc_fd') renderMC(host, item, p, 'fd');
-  else if (mode === 'input_df') renderInputDF(host, item, p);
-  else if (mode === 'match5') renderMatch5(host, item, p);
-  else if (mode === 'speech_mc') renderSpeechMC(host, item, p);
-  else if (mode === 'speech_input') renderSpeechInput(host, item, p);
-  else if (mode === 'sentence_build') renderSentenceBuilder(host, item, p);
+  if (mode === 'mc_df') renderMC(host, item, 'df');
+  else if (mode === 'mc_fd') renderMC(host, item, 'fd');
+  else if (mode === 'input_df') renderInputDF(host, item);
+  else if (mode === 'match5') renderMatch5(host, item);
+  else if (mode === 'speech_mc') renderSpeechMC(host, item);
+  else if (mode === 'speech_input') renderSpeechInput(host, item);
+  else if (mode === 'sentence_build') renderSentenceBuilder(host, item);
 }
 
-/* ======= MC (df/fd) – Auswahl + Überprüfen ======= */
-function renderMC(host, item, p, dir){
+/* ========== MC (df/fd) ========== */
+function renderMC(host, item, dir){
   const isDF = dir==='df';
   const wrap = div('mc-wrap');
   const prompt = div('prompt', isDF ? item.de : item.fr);
+  applyPromptSize(prompt, isDF ? item.de : item.fr);
   const emoji = emojiFor(item);
   const emojiEl = emoji ? div('emoji-hint', emoji) : null;
 
@@ -219,13 +219,11 @@ function renderMC(host, item, p, dir){
   opts.forEach(o=>{
     const b = button('choice', o.text);
     b.addEventListener('click', ()=>{
-      // Auswahl-UI
       $$('.choice', grid).forEach(n => n.classList.remove('selected'));
       b.classList.add('selected');
       selected = o;
       setPrimaryEnabled(true);
-      // Audio bei FR-Klick
-      if (isDF){ speakFR(o.text); }
+      if (isDF) speakFR(o.text); // FR-Klick gibt Ton
     });
     grid.appendChild(b);
   });
@@ -238,66 +236,57 @@ function renderMC(host, item, p, dir){
   if (!isDF) setTimeout(()=> speakFR(item.fr), 90);
 
   el.primary.onclick = ()=>{
-    if (state.answered) { nextCard(); return; }
-    if (!selected) return;
+    if (state.answered || !selected) return;
     const ok = !!selected.correct || normalize(selected.text)===normalize(item[key]);
     finish(ok, {modeId: isDF?'mc_df':'mc_fd', correctAnswer: item[key]});
   };
 }
 
-/* ======= Input DF ======= */
+/* ========== Input DF ========== */
 function renderInputDF(host, item){
   const prompt = div('prompt', item.de);
+  applyPromptSize(prompt, item.de);
   const wrap = div('input-wrap');
   const input = document.createElement('input'); input.placeholder='auf Französisch eingeben…';
   input.autocapitalize='off'; input.autocomplete='off'; input.spellcheck=false;
   wrap.append(input);
   host.append(prompt, wrap);
   input.focus();
-
   input.addEventListener('input', ()=> setPrimaryEnabled(input.value.trim().length>0));
   setPrimaryEnabled(false);
 
   el.primary.onclick = ()=>{
-    if (state.answered) { nextCard(); return; }
-    if (!input.value.trim()) return;
+    if (state.answered || !input.value.trim()) return;
     const res = isAcceptable(input.value, item.fr, item.alts?.fr || []);
     finish(res.ok, {modeId:'input_df', correctAnswer:item.fr});
   };
 }
 
-/* ======= Match 5 – beidseitig starten, FR-Klick spricht, Fehlersound ======= */
+/* ========== Match 5 – beidseitig starten, FR klickt ========== */
 function renderMatch5(host, item){
   const title = div('prompt','Zuordnen: Deutsch ↔ Französisch');
+  applyPromptSize(title, 'Zuordnen: Deutsch ↔ Französisch');
   const grid = div('kv');
   const left = div('col'), right = div('col');
   const pool = shuffle([item, ...shuffle(state.items.filter(i=>i.id!==item.id)).slice(0,4)]);
   const leftItems = shuffle(pool.map(it => ({id: it.id, text: it.de, side:'de'})));
   const rightItems = shuffle(pool.map(it => ({id: it.id, text: it.fr, side:'fr'})));
 
-  let active = null; // {id, side, el}
-
+  let active = null;
   function onPick(obj, elNode){
-    // FR Audio bei Klick
     if (obj.side==='fr') speakFR(obj.text);
-
-    // Auswahl toggeln
     if (active && active.el === elNode){ active.el.classList.remove('selected'); active=null; return; }
     if (!active){
       active = { ...obj, el: elNode };
-      elNode.classList.add('selected');
-      setPrimaryEnabled(true);
+      elNode.classList.add('selected'); setPrimaryEnabled(true);
     } else {
-      // Prüfe Paar
       const ok = active.id === obj.id && active.side !== obj.side;
       if (ok){
         active.el.classList.add('matched'); elNode.classList.add('matched');
         active.el.classList.remove('selected'); active=null;
-        // auto finish, wenn alle matched
         const done = $$('.item', left).filter(n=>!n.classList.contains('matched')).length===0;
         if (done){ finish(true, {modeId:'match5', correctAnswer:''}); return; }
       } else {
-        // Fehlersound & Feedback
         active.el.classList.remove('selected'); active=null;
         playOgg(el.fxBad, 'bad');
       }
@@ -321,9 +310,10 @@ function renderMatch5(host, item){
   el.primary.onclick = ()=> { if (state.answered) nextCard(); };
 }
 
-/* ======= Speech MC ======= */
+/* ========== Speech MC ========== */
 function renderSpeechMC(host, item){
   const prompt = div('prompt','Was wurde gesagt? (Französisch)');
+  applyPromptSize(prompt, prompt.textContent);
   const playBtn = audioBtn(()=> speakFR(item.fr));
   const grid = div('mc-grid');
 
@@ -342,12 +332,9 @@ function renderSpeechMC(host, item){
   opts.forEach(o=>{
     const b = button('choice', o.text);
     b.addEventListener('click', ()=>{
-      // Playback & Auswahl
       speakFR(o.text);
       $$('.choice', grid).forEach(n => n.classList.remove('selected'));
-      b.classList.add('selected');
-      selected = o;
-      setPrimaryEnabled(true);
+      b.classList.add('selected'); selected = o; setPrimaryEnabled(true);
     });
     grid.appendChild(b);
   });
@@ -356,37 +343,37 @@ function renderSpeechMC(host, item){
   setTimeout(()=> speakFR(item.fr), 90);
 
   el.primary.onclick = ()=>{
-    if (state.answered) { nextCard(); return; }
-    if (!selected) return;
+    if (state.answered || !selected) return;
     const ok = !!selected.correct || normalize(selected.text)===normalize(item.fr);
     finish(ok, {modeId:'speech_mc', correctAnswer:item.fr});
   };
 }
 
-/* ======= Speech Input ======= */
+/* ========== Speech Input ========== */
 function renderSpeechInput(host, item){
   const prompt = div('prompt','Schreibe, was du hörst (Französisch)');
+  applyPromptSize(prompt, prompt.textContent);
   const playBtn = audioBtn(()=> speakFR(item.fr));
   const wrap = div('input-wrap');
   const input = document.createElement('input'); input.placeholder='gehörtes FR-Wort/-Satz…';
   wrap.append(input);
   host.append(prompt, playBtn, wrap);
   input.focus();
-
   input.addEventListener('input', ()=> setPrimaryEnabled(input.value.trim().length>0));
   setPrimaryEnabled(false);
   setTimeout(()=> speakFR(item.fr), 110);
 
   el.primary.onclick = ()=>{
-    if (state.answered) { nextCard(); return; }
-    if (!input.value.trim()) return;
+    if (state.answered || !input.value.trim()) return;
     const res = isAcceptable(input.value, item.fr, item.alts?.fr || []);
     finish(res.ok, {modeId:'speech_input', correctAnswer:item.fr});
   };
 }
 
-/* ======= Satzbauer (Ghost-Placeholder, keine Vorab-Einblendung) ======= */
+/* ========== Satzbauer (Ghost-Placeholder) ========== */
 function renderSentenceBuilder(host, item){
+  const prompt = div('prompt', item.de);
+  applyPromptSize(prompt, item.de);
   const wrap = div('sentence-builder');
   const target = div('sentence-target');
   const pool = div('pool');
@@ -399,7 +386,6 @@ function renderSentenceBuilder(host, item){
     pool.appendChild(tile);
   });
   wrap.append(target, pool);
-  const prompt = div('prompt', `${item.de}`);
   host.append(prompt, wrap);
 
   setPrimaryEnabled(false);
@@ -412,21 +398,15 @@ function renderSentenceBuilder(host, item){
   };
 
   function moveTile(tile){
-    // Ghost-Platzhalter an Ziel anhängen (unsichtbar)
-    const ghost = document.createElement('span');
-    ghost.className = 'ghost-slot';
-    target.appendChild(ghost);
-
+    const ghost = document.createElement('span'); ghost.className = 'ghost-slot'; target.appendChild(ghost);
     const rectFrom = tile.getBoundingClientRect();
     const rectGhost = ghost.getBoundingClientRect();
 
-    // Flug-Klon
     const clone = tile.cloneNode(true);
     clone.classList.add('fly-clone');
     Object.assign(clone.style, { left: rectFrom.left+'px', top: rectFrom.top+'px', width: rectFrom.width+'px' });
     document.body.appendChild(clone);
 
-    // Nach Animation echten Tile hinter Ghost einfügen
     const dx = rectGhost.left - rectFrom.left;
     const dy = rectGhost.top - rectFrom.top;
     const anim = clone.animate([
@@ -442,12 +422,12 @@ function renderSentenceBuilder(host, item){
   }
 }
 
-/* ======= helpers ======= */
+/* ========== helpers ========== */
 function div(cls, html){ const d=document.createElement('div'); if(cls) d.className=cls; if(html!==undefined) d.innerHTML=html; return d; }
 function button(cls, html){ const b=document.createElement('button'); if(cls) b.className=cls; b.innerHTML=html; return b; }
 function audioBtn(onClick){ const b = button('audio-btn', `<svg><use href="#icon-sound"/></svg>`); b.addEventListener('click', onClick); return b; }
 
-/* ======= Abschluss ======= */
+/* ========== Abschluss ========== */
 function finish(ok, {modeId, correctAnswer}){
   if (state.answered) return;
   state.answered = true;
@@ -469,55 +449,52 @@ function finish(ok, {modeId, correctAnswer}){
     showMsg(`✖ Falsch. Richtig: <strong>${correctAnswer || item.fr}</strong>`);
     setActionLabel('Weiter','bad');
   }
-
   el.primary.onclick = ()=> nextCard();
 }
 
-/* ======= Flow ======= */
+/* ========== Flow ========== */
 function nextCard(){
   if (!state.items.length) return;
   const opts = { onlyDue: el.chkOnlyDue.checked, includeWords: el.chkWords.checked, includeSentences: el.chkSent.checked };
   const item = selectNextItem(state.items, state.progress, opts);
-  // Reset Action-UI
   el.actionBar.classList.remove('ok','bad');
   setActionLabel('Überprüfen'); setPrimaryEnabled(false);
   render(item);
 }
 
-/* ======= Import / Sample / Reset ======= */
-el.btnImport.addEventListener('click', ()=> el.fileInput.click());
+/* ========== Import / Sample / Reset ========== */
+$('#btn-import')?.addEventListener('click', ()=> el.fileInput.click());
 el.fileInput.addEventListener('change', async (e)=>{
   const f = e.target.files[0]; if(!f) return;
   const text = await f.text();
   if (f.name.endsWith('.json')) setItems(JSON.parse(text));
   else if (f.name.endsWith('.csv')) setItems(parseCSV(text));
 });
-el.btnSample.addEventListener('click', async ()=>{
+$('#btn-load-sample')?.addEventListener('click', async ()=>{
   const res = await fetch('./data/sample.json'); const json = await res.json(); setItems(json);
 });
-el.btnReset.addEventListener('click', ()=>{
+$('#btn-reset')?.addEventListener('click', ()=>{
   if (confirm('Fortschritt zurücksetzen?')){
     resetProgress(); state.progress = newProgressFor(state.items); saveAll(); refreshStats(); showMsg('Fortschritt gelöscht.');
   }
 });
 
-/* ======= Options toggles ======= */
+/* ========== Option toggles ========== */
 el.chkOnlyDue.addEventListener('change', ()=> state.session.onlyDue = el.chkOnlyDue.checked);
 el.chkWords.addEventListener('change', ()=> state.session.includeWords = el.chkWords.checked);
 el.chkSent.addEventListener('change', ()=> state.session.includeSentences = el.chkSent.checked);
-
 el.btnNew.addEventListener('click', ()=> { closeModal(el.modalOptions); nextCard(); });
 el.btnNext.addEventListener('click', ()=> nextCard());
 
-/* ======= Save ======= */
+/* ========== Save ========== */
 function saveAll(){
   const payload = { progress: state.progress, meta: { hash: hashItems(state.items), updated: Date.now() } };
   saveProgressDebounced(payload);
 }
 
-/* ======= Boot ======= */
+/* ========== Boot ========== */
 window.addEventListener('DOMContentLoaded', async ()=>{
   initTTS();
   try{ const res = await fetch('./data/sample.json'); const json = await res.json(); setItems(json); }catch(e){}
-  el.primary.onclick = ()=> {}; // wird pro Renderer gesetzt
+  el.primary.onclick = ()=> {}; // per Renderer überschrieben
 });

@@ -10,14 +10,13 @@
 <body>
   <!-- Icons -->
   <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
-    <symbol id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
     <symbol id="icon-sound" viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3zM16 7.82v8.36c1.79-.77 3-2.54 3-4.18s-1.21-3.41-3-4.18z"/></symbol>
     <symbol id="icon-upload" viewBox="0 0 24 24"><path d="M5 20h14v-2H5m7-9l5 5h-3v4h-4v-4H7l5-5z"/></symbol>
     <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM4 12a8 8 0 0116 0"/></symbol>
     <symbol id="icon-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
   </svg>
 
-  <!-- Header (transparent, mit Frame für Ausrichtung) -->
+  <!-- Header (transparent, exakt mit Karte ausgerichtet) -->
   <header class="app-header">
     <div class="frame">
       <div class="brand">
@@ -37,7 +36,7 @@
     </div>
   </header>
 
-  <!-- Stage ohne Scroll, Karte mittig -->
+  <!-- Bühne ohne Scroll -->
   <main class="stage">
     <div class="gutter"></div>
     <section class="card big" id="card">
@@ -46,6 +45,7 @@
           <p>Importiere deine CSV/JSON in <em>Optionen</em> oder nutze die Beispieldaten. Dann „Starten“.</p>
         </div>
       </div>
+      <!-- unterer Streifen (gleich wie Seitenhintergrund) -->
       <div class="action-bar" id="action-bar">
         <div class="message" id="action-msg"></div>
         <div class="actions">
@@ -56,15 +56,15 @@
     <div class="gutter"></div>
   </main>
 
-  <!-- Footer (transparent, ausgerichtet wie Karte) -->
+  <!-- Footer (transparent, mit Frame) -->
   <footer class="app-footer">
     <div class="frame">
       <div class="theme-toggle">
+        <span class="toggle-label">Darkmode</span>
         <label class="switch" title="Hell/Dunkel">
           <input id="theme-toggle" type="checkbox">
           <span class="slider"></span>
         </label>
-        <span id="theme-label">Hell</span>
       </div>
     </div>
   </footer>
