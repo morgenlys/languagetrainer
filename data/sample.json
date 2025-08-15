@@ -20,6 +20,16 @@
     "tokens_fr": []
   },
   {
+    "id": "maison",
+    "de": "Haus",
+    "fr": "maison",
+    "alts": { "fr": ["la maison"], "de": [] },
+    "type": "word",
+    "tags": ["home"],
+    "notes": "",
+    "tokens_fr": []
+  },
+  {
     "id": "je_suis_content",
     "de": "Ich bin froh",
     "fr": "Je suis content",
