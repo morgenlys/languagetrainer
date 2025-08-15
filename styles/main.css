@@ -9,7 +9,7 @@
   /* Light Theme */
   --bg: var(--lightgray);
   --card: var(--white);
-  --chrome: var(--darkdark);
+  --chrome: var(--darkdark);   /* Header/Footer-Text: 28,28,28 */
   --prompt: var(--black);
   --barbg: var(--lightgray);
 
@@ -24,10 +24,10 @@
   --chip-outline: var(--darkdark); /* Auswahlrahmen hell */
 
   /* Feedback-Paletten (hell) */
-  --ok-bar: rgb(215,241,228);        /* hellgrün Leiste */
+  --ok-bar: rgb(215,241,228);        /* Leiste hellgrün */
   --ok-btn: rgb(46,125,87);          /* Button grün */
   --ok-btn-hover: rgb(35,94,66);     /* Hover grün */
-  --bad-bar: rgb(248,221,221);       /* hellrot Leiste */
+  --bad-bar: rgb(248,221,221);       /* Leiste hellrot */
   --bad-btn: rgb(185,58,58);         /* Button rot */
   --bad-btn-hover: rgb(143,44,44);   /* Hover rot */
 
@@ -39,7 +39,7 @@
   --action-h: 92px;
 
   --font-family: Georgia, "Times New Roman", serif;
-  --fs-base: 15px;  /* leicht größer */
+  --fs-base: 15px;
 }
 html[data-theme="dark"]{
   --bg: var(--darkdark);
@@ -56,18 +56,18 @@ html[data-theme="dark"]{
   --chip-text: var(--white);
   --chip-border: var(--darkdark);
   --chip-hover: rgb(22,22,22);
-  --chip-outline: var(--white); /* Auswahlrahmen dunkel */
+  --chip-outline: var(--white);
 
   --border: var(--darkgray);
   --shadow: 0 16px 38px rgba(0,0,0,.55);
 
-  /* Feedback-Paletten (dunkel) */
-  --ok-bar: rgb(42,80,62);          /* dunkler Leisten-Grün */
-  --ok-btn: rgb(58,138,101);        /* Button grün */
-  --ok-btn-hover: rgb(46,110,81);   /* Hover grün */
-  --bad-bar: rgb(92,44,44);         /* dunkler Leisten-Rot */
-  --bad-btn: rgb(204,93,93);        /* Button rot */
-  --bad-btn-hover: rgb(178,72,72);  /* Hover rot */
+  /* Feedback-Paletten (dunkel) – kontrastreicher */
+  --ok-bar: rgb(42,80,62);
+  --ok-btn: rgb(58,138,101);
+  --ok-btn-hover: rgb(46,110,81);
+  --bad-bar: rgb(92,44,44);
+  --bad-btn: rgb(204,93,93);
+  --bad-btn-hover: rgb(178,72,72);
 }
 
 /* ===================== BASE ===================== */
@@ -79,13 +79,13 @@ body{
   color:var(--chrome);
   font-family: var(--font-family);
   font-size: var(--fs-base);
-  overflow:hidden; /* kein Scrollen */
+  overflow:hidden; /* Desktop: kein Scrollen */
 }
 
-/* überall Georgia, auch Buttons/Inputs */
+/* wirklich überall Georgia */
 button, input, select, textarea { font-family: var(--font-family); font-size: var(--fs-base); }
 
-/* ===================== HEADER/FOOTER fixiert ===================== */
+/* ===================== HEADER/FOOTER ===================== */
 .app-header{
   position:fixed; top:0; left:0; right:0; height:56px;
   display:flex; align-items:center; justify-content:center; background:transparent; z-index:7;
@@ -107,12 +107,14 @@ button, input, select, textarea { font-family: var(--font-family); font-size: va
 .icon-btn:hover{ background: rgba(0,0,0,.06) }
 html[data-theme="dark"] .icon-btn:hover{ background: rgba(255,255,255,.08) }
 
-/* Footer wie im Prototyp (rechtsbündig) */
+/* Footer rechtsbündig, „Darkmode“ nicht fett */
 .footer-right{justify-content:flex-end; gap:24px}
 .theme-toggle{display:flex; align-items:center; gap:10px; color:var(--chrome)}
-.toggle-caption{font-weight:700}
-.report-link{ color:var(--chrome); text-decoration:none; border-bottom:1px dotted var(--chrome); }
-.report-link:hover{ border-bottom-style:solid }
+.toggle-caption{font-weight:400}
+.report-link{
+  color:var(--chrome); text-decoration:none;
+}
+.report-link:hover{ text-decoration:underline }
 
 /* ===================== STAGE ===================== */
 .stage{
@@ -132,19 +134,15 @@ html[data-theme="dark"] .icon-btn:hover{ background: rgba(255,255,255,.08) }
 .card-inner{
   position:relative; flex:1;
   padding: 22px clamp(22px, 3vw, 34px);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; /* vertikal mittig */
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:18px; overflow:hidden;
 }
 
 /* Prompt / Emoji */
 .emoji-hint{ font-size: 42px; line-height:1; margin-top: 6px; }
 .prompt{
-  color: var(--prompt);
-  font-weight:700;
-  text-align:center;
-  line-height:1.25;
+  color: var(--prompt); font-weight:700; text-align:center; line-height:1.25;
   margin-top: 6px; margin-bottom: 10px;
-  /* Größe (36/24/18) setzt JS */
 }
 
 /* ===================== BUTTON ===================== */
@@ -158,7 +156,9 @@ html[data-theme="dark"] .icon-btn:hover{ background: rgba(255,255,255,.08) }
 }
 .btn:hover{ background:var(--btn-hover) }
 .btn.stable{ width:190px }
-.btn[disabled]{ opacity:.6; cursor:not-allowed }
+.btn[disabled]{
+  background: var(--barbg); color: var(--darkgray); box-shadow:none; opacity:1; cursor:not-allowed;
+}
 
 /* ===================== ACTION BAR ===================== */
 .action-bar{
@@ -193,14 +193,9 @@ html[data-theme="dark"] .input-wrap input{ background: var(--darkdark); color: v
   width:min(560px, 100%); margin-top: 6px;
 }
 .choice{
-  background: var(--chip-bg);
-  color: var(--chip-text);
-  border: 1px solid var(--chip-border);
-  border-radius: 12px;
-  padding: 16px 18px;
-  text-align:center;
-  cursor:pointer;
-  transition: background-color .15s ease;
+  background: var(--chip-bg); color: var(--chip-text);
+  border: 1px solid var(--chip-border); border-radius: 12px;
+  padding: 16px 18px; text-align:center; cursor:pointer; transition: background-color .15s ease;
   font-family: var(--font-family);
 }
 .choice:hover{ background: var(--chip-hover) }
@@ -236,7 +231,7 @@ html[data-theme="dark"] .input-wrap input{ background: var(--darkdark); color: v
 html[data-theme="dark"] .audio-btn:hover{ background: rgba(255,255,255,.08) }
 .audio-btn svg{width:18px;height:18px; fill:currentColor}
 
-/* ===================== SATZBAU (mit Slots) ===================== */
+/* ===================== SATZBAU ===================== */
 .sentence-builder{display:flex; flex-direction:column; gap:14px; align-items:center}
 .sentence-target{
   min-height:64px; border:2px dashed var(--chip-border); border-radius:12px; padding:12px;
@@ -245,30 +240,17 @@ html[data-theme="dark"] .audio-btn:hover{ background: rgba(255,255,255,.08) }
 .pool{
   min-height:68px; background: var(--card); border-radius:12px; padding:12px;
   display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-start; align-content:flex-start;
-  width:min(720px,100%);
-  box-shadow: 0 1px 0 rgba(0,0,0,.04) inset;
+  width:min(720px,100%); box-shadow: 0 1px 0 rgba(0,0,0,.04) inset;
 }
-.pool-slot{
-  display:inline-flex; align-items:center; justify-content:center;
-  margin:4px 4px; position:relative;
-}
-.pool-slot.empty{
-  border:2px dashed var(--chip-border);
-  border-radius:10px;
-  background:transparent;
-}
+.pool-slot{ display:inline-flex; align-items:center; justify-content:center; margin:4px 4px; position:relative; }
+.pool-slot.empty{ border:2px dashed var(--chip-border); border-radius:10px; background:transparent; }
 .tile{
   background: var(--chip-bg); color: var(--chip-text);
-  border:1px solid var(--chip-border);
-  border-radius:10px; padding:10px 12px; cursor:pointer; user-select:none;
+  border:1px solid var(--chip-border); border-radius:10px; padding:10px 12px; cursor:pointer; user-select:none;
   font-family: var(--font-family);
 }
-
-/* Flugklon für Animation */
-.fly-clone{
-  position:fixed; z-index:999; pointer-events:none; border-radius:10px; padding:10px 12px;
-  background: var(--chip-bg); color: var(--chip-text); border:1px solid var(--chip-border);
-}
+.fly-clone{ position:fixed; z-index:999; pointer-events:none; border-radius:10px; padding:10px 12px;
+  background: var(--chip-bg); color: var(--chip-text); border:1px solid var(--chip-border); }
 .ghost-slot{width:0;height:0; display:inline-block;}
 
 /* ===================== MODAL ===================== */
@@ -299,9 +281,18 @@ html[data-theme="dark"] .audio-btn:hover{ background: rgba(255,255,255,.08) }
 .switch input:checked + .slider{ background: var(--black); border-color: var(--black) }
 .switch input:checked + .slider:before{ transform: translateX(20px); background: var(--lightgray) }
 
-/* ===================== RESPONSIVE ===================== */
-@media (max-width: 860px){
-  .stage{grid-template-columns: 8px 1fr 8px}
+/* ===================== RESPONSIVE (Mobile-Modus) ===================== */
+@media (max-width: 640px){
+  body{ overflow:auto; }
+  .app-header{ position:sticky; top:0; }
+  .app-footer{ position:static; } /* Footer erscheint nur unten beim Scrollen */
+  .stage{
+    position:relative; top:0; bottom:auto;
+    grid-template-columns: 0 1fr 0;
+    padding: 0;
+  }
+  .card.big{ border-radius:0; box-shadow:none; }
+  .action-bar{ border-radius:0; }
   .mc-grid{grid-template-columns:1fr}
   .kv{grid-template-columns:1fr}
 }
