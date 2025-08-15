@@ -148,13 +148,17 @@ function playFX(type='ok'){
 
 /* ===== helpers ===== */
 function showMsg(text){ el.actionMsg.innerHTML = text; }
-function clearFeedback(){ el.actionBar.classList.remove('ok','bad'); el.actionMsg.textContent=''; }
 function setActionLabel(text, cls=null){
-  el.primary.textContent = text;
+  el.actionBar.classList.remove('ok','bad');
   el.primary.classList.remove('ok','bad');
-  if (cls) el.primary.classList.add(cls);
+  el.primary.textContent = text;
+  if (cls){
+    el.actionBar.classList.add(cls);
+    el.primary.classList.add(cls);
+  }
 }
 function setPrimaryEnabled(on){ el.primary.disabled = !on; }
+function clearForNext(){ el.actionBar.classList.remove('ok','bad'); setActionLabel('Überprüfen'); setPrimaryEnabled(false); }
 
 /* Prompt-Größe 36/24/18 je Länge */
 function applyPromptSize(node, text){
@@ -172,8 +176,7 @@ function emojiFor(item){
 
 /* ===== RENDER ===== */
 function render(item){
-  state.current = item; state.answered = false; clearFeedback();
-  setActionLabel('Überprüfen'); setPrimaryEnabled(false);
+  state.current = item; state.answered = false; clearForNext();
 
   const host = el.modeContainer; host.innerHTML = '';
   const p = state.progress[item.id];
@@ -245,10 +248,13 @@ function renderInputDF(host, item){
   const prompt = div('prompt', item.de); applyPromptSize(prompt, item.de); host.append(prompt);
 
   const wrap = div('input-wrap');
-  const input = document.createElement('input'); input.placeholder='auf Französisch eingeben…';
-  input.autocapitalize='off'; input.autocomplete='off'; input.spellcheck=false;
-  wrap.append(input); host.append(wrap); input.focus();
+  const input = document.createElement('input');
+  input.placeholder='auf Französisch eingeben…';
+  input.autocapitalize='off'; input.autocomplete='off'; input.spellcheck=false; input.setAttribute('autofocus','true');
+  wrap.append(input); host.append(wrap);
+  setTimeout(()=> input.focus(), 0);
   input.addEventListener('input', ()=> setPrimaryEnabled(input.value.trim().length>0));
+  input.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !el.primary.disabled){ el.primary.click(); } });
   setPrimaryEnabled(false);
 
   el.primary.onclick = ()=>{
@@ -333,8 +339,10 @@ function renderSpeechInput(host, item){
   const prompt = div('prompt','Schreibe, was du hörst (Französisch)'); applyPromptSize(prompt, prompt.textContent); host.append(prompt);
   const playBtn = audioBtn(()=> speakFR(item.fr)); host.append(playBtn);
   const wrap = div('input-wrap'); const input = document.createElement('input'); input.placeholder='gehörtes FR-Wort/-Satz…';
-  wrap.append(input); host.append(wrap); input.focus();
+  input.autocapitalize='off'; input.autocomplete='off'; input.spellcheck=false; input.setAttribute('autofocus','true');
+  wrap.append(input); host.append(wrap); setTimeout(()=> input.focus(), 0);
   input.addEventListener('input', ()=> setPrimaryEnabled(input.value.trim().length>0));
+  input.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !el.primary.disabled){ el.primary.click(); } });
   setPrimaryEnabled(false); setTimeout(()=> speakFR(item.fr), 110);
 
   el.primary.onclick = ()=>{
@@ -344,14 +352,37 @@ function renderSpeechInput(host, item){
   };
 }
 
-/* Satzbau (Ghost-Placeholder, Fly-Up) */
+/* ===== Satzbau – Slots + Rückwärtsbewegung ===== */
 function renderSentenceBuilder(host, item){
   const emoji = emojiFor(item); if (emoji) host.append(div('emoji-hint', emoji));
   const prompt = div('prompt', item.de); applyPromptSize(prompt, item.de); host.append(prompt);
 
   const wrap = div('sentence-builder'); const target = div('sentence-target'); const pool = div('pool');
   const tiles = shuffle(item.tokens_fr.slice()); let placed = 0;
-  tiles.forEach(t=>{ const tile = div('tile', t); tile.addEventListener('click', ()=> moveTile(tile)); pool.appendChild(tile); });
+
+  const slotsById = new Map();
+
+  tiles.forEach((t, idx)=>{
+    const tile = div('tile', t);
+    const slot = div('pool-slot');
+    slot.appendChild(tile);
+    pool.appendChild(slot);
+
+    // Nach Layout Messung Slot-Größe fixieren (damit Position stabil bleibt)
+    requestAnimationFrame(()=>{
+      const r = tile.getBoundingClientRect();
+      slot.style.width = r.width + 'px';
+      slot.style.height = r.height + 'px';
+    });
+
+    const sid = 's'+idx+'_'+Math.random().toString(36).slice(2);
+    tile.dataset.slotId = sid;
+    slot.dataset.slotId = sid;
+    slotsById.set(sid, slot);
+
+    tile.addEventListener('click', ()=> move(tile));
+  });
+
   wrap.append(target, pool); host.append(wrap);
   setPrimaryEnabled(false);
 
@@ -362,15 +393,49 @@ function renderSentenceBuilder(host, item){
     finish(ok, {modeId:'sentence_build', correctAnswer:item.fr});
   };
 
-  function moveTile(tile){
+  function move(tile){
+    // in Ziel -> zurück in Slot
+    if (tile.parentElement === target){
+      const slot = slotsById.get(tile.dataset.slotId);
+      const rectFrom = tile.getBoundingClientRect();
+      const rectTo = slot.getBoundingClientRect();
+
+      const clone = tile.cloneNode(true); clone.classList.add('fly-clone');
+      Object.assign(clone.style, { left: rectFrom.left+'px', top: rectFrom.top+'px', width: rectFrom.width+'px' });
+      document.body.appendChild(clone);
+
+      const dx = rectTo.left - rectFrom.left;
+      const dy = rectTo.top - rectFrom.top;
+
+      clone.animate([{transform:'translate(0,0)'},{transform:`translate(${dx}px, ${dy}px)`}], {duration:260, easing:'cubic-bezier(.2,.8,.2,1)'}).onfinish = ()=>{
+        clone.remove();
+        slot.classList.remove('empty');
+        slot.appendChild(tile);
+        placed = Math.max(0, placed-1);
+        setPrimaryEnabled(placed>0);
+      };
+      return;
+    }
+
+    // aus Pool -> ins Ziel
+    const slot = slotsById.get(tile.dataset.slotId);
+    slot.classList.add('empty');
+
     const ghost = document.createElement('span'); ghost.className='ghost-slot'; target.appendChild(ghost);
-    const rectFrom = tile.getBoundingClientRect(); const rectGhost = ghost.getBoundingClientRect();
+
+    const rectFrom = tile.getBoundingClientRect();
+    const rectGhost = ghost.getBoundingClientRect();
+
     const clone = tile.cloneNode(true); clone.classList.add('fly-clone');
     Object.assign(clone.style, { left: rectFrom.left+'px', top: rectFrom.top+'px', width: rectFrom.width+'px' });
     document.body.appendChild(clone);
-    const dx = rectGhost.left - rectFrom.left; const dy = rectGhost.top - rectFrom.top;
+
+    const dx = rectGhost.left - rectFrom.left;
+    const dy = rectGhost.top - rectFrom.top;
     clone.animate([{transform:'translate(0,0)'},{transform:`translate(${dx}px, ${dy-6}px)`}], {duration:260, easing:'cubic-bezier(.2,.8,.2,1)'}).onfinish = ()=>{
-      ghost.replaceWith(tile); clone.remove(); placed++; setPrimaryEnabled(placed>0);
+      ghost.replaceWith(tile);
+      clone.remove();
+      placed++; setPrimaryEnabled(placed>0);
     };
   }
 }
@@ -393,10 +458,13 @@ function finish(ok, {modeId, correctAnswer}){
   // Sounds
   playOgg(ok ? el.fxOk : el.fxBad, ok ? 'ok' : 'bad');
 
-  // keine Farbverläufe – wir lassen die Bar im jeweiligen Theme und geben Textfeedback
-  if (ok){ showMsg('✔ Richtig!'); setActionLabel('Weiter','ok'); }
-  else   { showMsg(`✖ Falsch. Richtig: <strong>${correctAnswer || item.fr}</strong>`); setActionLabel('Weiter','bad'); }
-
+  if (ok){
+    showMsg('✔ Richtig!');
+    setActionLabel('Weiter','ok');
+  } else {
+    showMsg(`✖ Falsch. Richtig: <strong>${correctAnswer || item.fr}</strong>`);
+    setActionLabel('Weiter','bad');
+  }
   el.primary.onclick = ()=> nextCard();
 }
 
@@ -405,7 +473,7 @@ function nextCard(){
   if (!state.items.length) return;
   const opts = { onlyDue: el.chkOnlyDue.checked, includeWords: el.chkWords.checked, includeSentences: el.chkSent.checked };
   const item = selectNextItem(state.items, state.progress, opts);
-  setActionLabel('Überprüfen'); setPrimaryEnabled(false);
+  clearForNext();
   render(item);
 }
 
@@ -443,5 +511,5 @@ function saveAll(){
 window.addEventListener('DOMContentLoaded', async ()=>{
   initTTS();
   try{ const res = await fetch('./data/sample.json'); const json = await res.json(); setItems(json); }catch(e){}
-  el.primary.onclick = ()=> {}; // wird im jeweiligen Renderer gesetzt
+  el.primary.onclick = ()=> {}; // wird im Renderer gesetzt
 });

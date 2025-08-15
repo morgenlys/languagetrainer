@@ -16,7 +16,7 @@
     <symbol id="icon-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
   </svg>
 
-  <!-- Header (transparent, exakt mit Karte ausgerichtet) -->
+  <!-- Header -->
   <header class="app-header">
     <div class="frame">
       <div class="brand">
@@ -57,17 +57,17 @@
     <div class="gutter"></div>
   </main>
 
-  <!-- Footer (transparent, mit Frame) -->
+  <!-- Footer wie im Prototyp (rechtsbündig) -->
   <footer class="app-footer">
-    <div class="frame footer-row">
+    <div class="frame footer-right">
       <div class="theme-toggle">
+        <span class="toggle-caption">Darkmode</span>
         <label class="switch" title="Hell/Dunkel">
           <input id="theme-toggle" type="checkbox">
           <span class="slider"></span>
         </label>
-        <span class="toggle-caption">Darkmode</span>
       </div>
-      <a class="report-link" href="#" onclick="alert('Danke! Beschreibe das Problem kurz in einem Issue im Repo.');return false;">Problem melden</a>
+      <a class="report-link" href="#" onclick="alert('Danke! Bitte ein Issue im Repository anlegen und das Problem beschreiben.');return false;">Problem melden</a>
     </div>
   </footer>
 
@@ -125,7 +125,7 @@
     </div>
   </div>
 
-  <!-- Voice-Hinweis Modal -->
+  <!-- Voice-Hinweis Modal (vollständig) -->
   <div class="modal" id="modal-voice" aria-hidden="true">
     <div class="modal-backdrop" data-close></div>
     <div class="modal-card">
@@ -134,7 +134,15 @@
         <button class="icon-btn" data-close><svg><use href="#icon-close"/></svg></button>
       </div>
       <div class="modal-body">
-        <p>Dein Browser meldet keine französische Stimme. Bitte füge eine FR-Stimme hinzu (iOS/Android/Windows/macOS). Danach Seite neu laden.</p>
+        <p>Dein Browser meldet keine französische Stimme. So richtest du eine FR-Stimme ein:</p>
+        <ul>
+          <li><strong>iOS/iPadOS:</strong> Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen → Französisch laden. Danach Safari neu starten.</li>
+          <li><strong>Android:</strong> Einstellungen → System → Sprachen & Eingabe → Text-in-Sprache → bevorzugte Engine → Stimmen → Französisch herunterladen/aktivieren.</li>
+          <li><strong>Windows 10/11:</strong> Einstellungen → Zeit & Sprache → Sprache & Region → Sprachpakete → <em>Französisch</em> hinzufügen → Sprachoptionen → Spracheingabe/Sprachausgabe (Stimme) installieren.</li>
+          <li><strong>macOS:</strong> Systemeinstellungen → Bedienungshilfen → Gesprochene Inhalte → Systemstimme → „Anpassen…“ → Französisch auswählen & laden.</li>
+          <li><strong>Chrome/Edge:</strong> Nach Installation ggf. Browser komplett schließen und erneut öffnen, dann diese Seite neu laden.</li>
+        </ul>
+        <p>Wenn die Stimme installiert ist, wähle sie unter <em>Optionen → Stimme</em> aus.</p>
       </div>
     </div>
   </div>
